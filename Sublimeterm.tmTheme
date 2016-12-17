@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>name</key>
+	<string>Sublimeterm</string>
+	<key>settings</key>
+	<array>
+		<dict>
+			<key>settings</key>
+			<dict>
+				<key>background</key>
+				<string>#111111</string>
+
+				<key>caret</key>
+				<string>#F18260</string>
+
+				<key>foreground</key>
+				<string>#F1F1F1</string>
+
+				<key>invisibles</key>
+				<string>#F18260</string>
+
+				<key>lineHighlight</key>
+				<string>#232323</string>
+
+				<key>selection</key>
+				<string>#4C4C4C</string>
+
+				<key>inactiveSelection</key>
+				<string>#3C3C3C</string>
+
+				<key>findHighlight</key>
+				<string>#F18260</string>
+
+				<key>gutterForeground</key>
+				<string>#4C4C4C</string>
+
+				<key>guide</key>
+				<string>#F1826025</string>
+
+				<key>activeGuide</key>
+				<string>#F1826050</string>
+
+				<key>minimapBorder</key>
+				<string>#F1826025</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>Comment</string>
+			<key>scope</key>
+			<string>prompt</string>
+			<key>settings</key>
+			<dict>
+				<key>foreground</key>
+				<string>#FF7777</string>
+			</dict>
+		</dict>
+	</array>
+	<key>uuid</key>
+	<string>D8D5E82E-3D5B-46B5-B38E-8C841C21347A</string>
+</dict>
+</plist>

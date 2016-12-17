@@ -1,0 +1,35 @@
+[
+	{
+    "keys": ["ctrl+option+&"],
+    "command": "sublimeterm",
+   	"args" : {"make_new":true}
+	},
+	{
+    "keys": ["ctrl+option+a"],
+    "command": "sublimeterm",
+   	"args" : {"make_new":false}
+	},
+	{
+		"keys": ["tab"],
+		"command": "sublimeterm",
+		"args" : {"key":"tab"},
+		"context":  [{ "key": "sublimeterm_event"}]
+	},{
+		"keys": ["down"],
+		"command": "sublimeterm",
+		"args" : {"key":"down"},
+		"context":  [{ "key": "sublimeterm_event"}]
+	},
+	{
+		"keys": ["up"],
+		"command": "sublimeterm",
+		"args" : {"key":"up"},
+		"context":  [{ "key": "sublimeterm_event"}]
+	},
+	{
+		"keys": ["enter"],
+		"command": "sublimeterm",
+		"args" : {"key":"enter"},
+		"context":  [{ "key": "sublimeterm_event"}]
+	}
+]

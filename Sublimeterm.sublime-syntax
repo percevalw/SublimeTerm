@@ -1,0 +1,43 @@
+%YAML 1.2
+---
+# http://www.sublimetext.com/docs/3/syntax.html
+name: Sublimeterm
+file_extensions:
+  - output
+scope: sublimeterm
+
+variables:
+  p1: 'baujolet'
+
+contexts:
+  main:
+    - match: 'Archimede:.*?\$'
+      scope: prompt
+    - match: '{{p1}}'
+      set: o1_2
+  o1_2:
+    - match: '{{p1}}'
+      set: o1_3
+  o1_3:
+    - match: '{{p1}}'
+      set: o1_4
+  o1_4:
+    - match: '{{p1}}'
+      set: o1_5
+  o1_5:
+    - match: '{{p1}}'
+      set: o1_6
+  o1_6:
+    - match: '{{p1}}'
+      set: o1_7
+      scope: prompt
+  o1_7:
+    - match: '{{p1}}'
+      set: o1_8
+  o1_8:
+    - match: '{{p1}}'
+      set: o1_9
+      scope: prompt
+  o1_9:
+    - meta_scope: normal
+

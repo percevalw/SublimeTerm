@@ -1,0 +1,34 @@
+[
+    // Basic drag select
+    {
+        "button": "button1", "count": 1,
+        "press_command": "sublimeterm_mouse",
+    },
+    {
+        "button": "button1", "count": 1, "modifiers": ["ctrl"],
+        "press_command": "sublimeterm_mouse",
+        "press_args": {"additive": true},
+    },
+    {
+        "button": "button1", "count": 1, "modifiers": ["alt"],
+        "press_command": "sublimeterm_mouse",
+        "press_args": {"subtractive": true}
+    },
+
+    // Column select
+    {
+        "button": "button2", "modifiers": ["shift"],
+        "press_command": "sublimeterm_mouse",
+        "press_args": {"by": "columns"}
+    },
+    {
+        "button": "button2", "modifiers": ["shift", "ctrl"],
+        "press_command": "sublimeterm_mouse",
+        "press_args": {"by": "columns", "additive": true}
+    },
+    {
+        "button": "button2", "modifiers": ["shift", "alt"],
+        "press_command": "sublimeterm_mouse",
+        "press_args": {"by": "columns", "subtractive": true}
+    }
+]

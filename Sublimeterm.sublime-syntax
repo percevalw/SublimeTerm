@@ -11,7 +11,7 @@ variables:
 
 contexts:
   main:
-    - match: 'Archimede:.*?\$'
+    - match: '^.*?\$'
       scope: prompt
     - match: '{{p1}}'
       set: o1_2

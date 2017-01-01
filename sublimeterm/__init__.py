@@ -1,10 +1,11 @@
 import imp
+import logging
 
-from . import sublimeterm_view_controller
+from . import ansi_output_transcoder
 from . import input_transcoder
 from . import output_transcoder
-from . import ansi_output_transcoder
 from . import process_controller
+from . import sublimeterm_view_controller
 from . import utils
 imp.reload(utils)
 imp.reload(sublimeterm_view_controller)
@@ -19,4 +20,4 @@ from .output_transcoder import *
 from .process_controller import *
 from .sublimeterm_view_controller import *
 
-print("RELOADED")
+logging.basicConfig(level=logging.INFO)

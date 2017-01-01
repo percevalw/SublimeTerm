@@ -1,8 +1,24 @@
 #!/usr/bin/env python
 
-__all__ = ['InputTranscoder']
+import logging
+import struct
+import termios
 
 from .utils import *
+
+try:
+    from Queue import Queue, Empty
+except ImportError:
+    from queue import Queue, Empty  # python 3.x
+
+logger = logging.getLogger()
+
+
+def log_debug(*args):
+    logger.debug(" ".join(map(str, args)))
+
+
+__all__ = ['InputTranscoder']
 
 
 class InputTranscoder():
@@ -25,7 +41,7 @@ class InputTranscoder():
 
     def set_size(self, w, h, pw, ph):
         s = struct.pack('HHHH', h, w, ph, pw)
-        log("SIZE TO BE SENT", struct.unpack('HHHH', s))
+        log_debug("SIZE TO BE SENT", struct.unpack('HHHH', s))
         self.input_queue.put((1, (termios.TIOCSWINSZ, s)))
 
     #        self.input_queue.put((2, signal.SIGWINCH))

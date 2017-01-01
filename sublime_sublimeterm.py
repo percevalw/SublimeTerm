@@ -1,5 +1,8 @@
 import sublime, sublime_plugin, sublime_api
 import sys, imp, os
+import logging
+
+logging.basicConfig(level = logging.DEBUG)
 
 from . import sublimeterm
 
@@ -74,13 +77,13 @@ class SublimetermEditorCommand(sublime_plugin.TextCommand):
         if cursor >= 0:
             self.view.sel().clear()
         if action == 0:
-            print("EDITOR INSERT", repr(string), "AT", begin)
+            #print("EDITOR INSERT", repr(string), "AT", begin)
             self.view.insert(edit, begin, string)
         elif action == 1 and begin < end:
-            print("EDITOR ERASE", begin, end)
+            #print("EDITOR ERASE", begin, end)
             self.view.erase(edit, sublime.Region(begin, end))
         elif action == 2:
-            print("EDITOR REPLACE", repr(string), "AT", begin, end, "INSTEAD OF", repr(self.view.substr(sublime.Region(begin, end))))
+            #print("EDITOR REPLACE", repr(string), "AT", begin, end, "INSTEAD OF", repr(self.view.substr(sublime.Region(begin, end))))
             self.view.replace(edit, sublime.Region(begin, end), string)
         if cursor >= 0:
             self.view.sel().add(sublime.Region(cursor))
@@ -109,7 +112,7 @@ class SublimetermListener(sublime_plugin.EventListener):
     def on_close(self, view):
         c = sublimeterm.SublimetermViewController.instance
         p = sublimeterm.ProcessController.instance
-        if view == c.console:
+        if c.console is not None and view == c.console:
             print("--------- DESACTIVATED ---------")
             if p:
                 p.close()

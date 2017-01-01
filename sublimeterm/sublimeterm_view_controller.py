@@ -29,35 +29,53 @@ if (proc_mod_begin >= view_mod_begin and proc_mod_begin <= view_mod_end) or \
 
 """
 
-import sublime, sublime_plugin, sublime_api
-from .utils import *
+import logging
+import time
+from threading import Event, Lock, Thread
+
+import sublime
+import sublime_api
+
+try:
+    from Queue import Queue, Empty
+except ImportError:
+    from queue import Queue, Empty  # python 3.x
+
+logger = logging.getLogger()
 from .input_transcoder import *
 from .ansi_output_transcoder import *
 from .process_controller import *
 
 __all__ = ['SublimetermViewController']
 
+logger = logging.getLogger()
+
+def debug(*args):
+    logger.debug(" ".join(map(str, args)))
+
 try:
-    log("stop potentially-existing SublimetermViewController...")
+    # debug("stop potentially-existing SublimetermViewController...")
     c = SublimetermViewController.instance.close()
 except:
-    log("and there was none")
+    # debug("and there was none")
+    pass
 else:
-    log("and there was one")
+    # debug("and there was one")
+    pass
 
 
 class SublimetermViewController():
     instance = None
 
     def __del__(self):
-        log("SublimetermViewController should have been deleted !")
+        debug("SublimetermViewController should have been deleted !")
 
-    def __new__(_class, input_transcoder, output_transcoder):
-        if isinstance(_class.instance, _class):
-            _class.instance.close()
+    def __new__(cls, input_transcoder, output_transcoder):
+        if isinstance(cls.instance, cls):
+            cls.instance.close()
 
-        _class.instance = object.__new__(_class)
-        return _class.instance
+        cls.instance = object.__new__(cls)
+        return cls.instance
 
     def __init__(self, input_transcoder, output_transcoder):
         self.master = None
@@ -114,8 +132,10 @@ class SublimetermViewController():
     content is compromised, we clear an event that
     is being waited by the output writer
     """
+
     def on_modified(self):
-        print("SIZES", self.console.size(), self.last_size, self.dont_notify_for_selection, self.has_just_changed_view)
+        debug("SIZES", self.console.size(), self.last_size, self.dont_notify_for_selection,
+                  self.has_just_changed_view)
 
         size = self.console.size()
 
@@ -126,10 +146,10 @@ class SublimetermViewController():
             return
 
         self.no_input_event.clear()
-        #time.sleep(0.5)
+        # time.sleep(0.5)
         current_sel = self.console.sel()
 
-        print("ACC SIZES", self.console.size(), self.last_size)
+        debug("ACC SIZES", self.console.size(), self.last_size)
         delta = size - self.last_size
         last_position = self.last_sel
         if delta > 0:
@@ -138,30 +158,29 @@ class SublimetermViewController():
             new_position = current_sel[0].a
 
         self.compute_change_interval(last_position, new_position, delta)
-        log("HAS UNPROCESS INPUTS", self.has_unprocessed_inputs)
+        debug("HAS UNPROCESS INPUTS", self.has_unprocessed_inputs)
         if delta > 0:
             """
             If the cursor moved forward, then some content has been added
             """
-            content = self.console.substr(sublime.Region(last_position, last_position+delta))
-            log("ADDED CONTENT BETWEEN", last_position, last_position+delta, " : ", repr(content))
-            log("PROCESS CONTENT SIZE", self.output_transcoder.max_cursor())
+            content = self.console.substr(sublime.Region(last_position, last_position + delta))
+            debug("ADDED CONTENT BETWEEN", last_position, last_position + delta, " : ", repr(content))
+            debug("PROCESS CONTENT SIZE", self.output_transcoder.content_size)
             """ This part has been tranfered to the process controller """
-#            if new_position <= self.output_transcoder.max_cursor() + 1:
-#                self.compute_change_interval(last_position, new_position)
+            #            if new_position <= self.output_transcoder.max_cursor() + 1:
+            #                self.compute_change_interval(last_position, new_position)
             self.input_queue.put((0, content))
 
         elif delta < 0:
             """
             Else, some content has been erased
             """
-            log("ERASED CONTENT BETWEEN", last_position+delta, last_position)
+            debug("ERASED CONTENT BETWEEN", last_position + delta, last_position)
             self.input_queue.put((1, -delta))
 
         self.last_size = size
         self.last_sel = self.console.sel()[0].a
         self.no_input_event.set()
-
 
     """
     Called when the view cursor is moved
@@ -169,15 +188,16 @@ class SublimetermViewController():
     during the execution, we clear an event that
     is being waited by the output writer
     """
+
     def on_selection_modified(self):
         """
         TODO : There is something todo here, regarding
         whether it is important or not to prevent a notification
         when the client changes the cursor
         """
-#        if self.has_just_changed_view:
-#            self.has_just_changed_view = False
-#            return
+        #        if self.has_just_changed_view:
+        #            self.has_just_changed_view = False
+        #            return
 
         if self.dont_notify_for_selection:
             self.dont_notify_for_selection = False
@@ -188,17 +208,15 @@ class SublimetermViewController():
         last_position = self.last_sel
         self.last_sel = self.console.sel()[0].a
 
-        print("CURRENT SEL, [{}, {}]".format(self.console.sel()[0].a, self.console.sel()[0].b))
+        debug("CURRENT SEL, [{}, {}]".format(self.console.sel()[0].a, self.console.sel()[0].b))
 
         if last_position != self.last_sel:
-
-#            self.compute_change_interval(last_position, self.last_sel)
-            rel = self.last_sel-last_position
-            log("CHANGED CURSOR", rel)
+            #            self.compute_change_interval(last_position, self.last_sel)
+            rel = self.last_sel - last_position
+            debug("CHANGED CURSOR", rel)
             self.input_queue.put((2, rel))
 
         self.no_input_event.set()
-
 
     """
     Update the known position of the cursor
@@ -209,25 +227,26 @@ class SublimetermViewController():
     TODO : find what may disturb other methods such as write_output
     when this one is fired
     """
+
     def write_special_character(self, char):
         self.no_input_event.clear()
 
         last_position = self.last_sel
         self.last_sel = self.console.sel()[0].a
 
-#        self.compute_change_interval(last_position, self.last_sel)
+        #        self.compute_change_interval(last_position, self.last_sel)
 
         self.input_queue.put((0, char))
 
         self.no_input_event.set()
 
     def compute_change_interval(self, last_position, new_position, delta):
-        print("COMPUTE CHANGE", last_position, new_position, "DELTA", delta)
+        debug("COMPUTE CHANGE", last_position, new_position, "DELTA", delta)
         if not self.is_content_dirty:
             self.view_mod_begin = min(last_position, new_position)
             self.view_mod_end = max(last_position + delta, new_position)
             self.view_mod_delta = delta
-            print("FIRST INTERVAL BETWEEN", self.view_mod_begin, self.view_mod_end, "DELTA", self.view_mod_delta)
+            debug("FIRST INTERVAL BETWEEN", self.view_mod_begin, self.view_mod_end, "DELTA", self.view_mod_delta)
             self.is_content_dirty = True
             return
         # ie new_position < last_position
@@ -235,13 +254,14 @@ class SublimetermViewController():
         self.view_mod_begin = min(self.view_mod_begin, new_position, last_position)
         self.view_mod_end = max(self.view_mod_end + delta, last_position + delta)
         self.view_mod_delta += delta
-        print("AFTER INTERVAL, BETWEEN", self.view_mod_begin, self.view_mod_end, "DELTA", self.view_mod_delta)
+        debug("AFTER INTERVAL, BETWEEN", self.view_mod_begin, self.view_mod_end, "DELTA", self.view_mod_delta)
 
     """
     Called when the process has some content to log
     We avoid to disturb any input detection process
     by waiting for a "no-input" event
     """
+
     def write_output(self, begin, end, string):
         if self.stop:
             return
@@ -252,35 +272,36 @@ class SublimetermViewController():
         self.no_input_event.wait()
         self.has_just_changed_view = True
         will_make_selection = pos == begin == end
-#        log("POS0", self.console.sel()[0].a)
+        #        debug("POS0", self.console.sel()[0].a)
         sublime_api.view_run_command(self.console.view_id, "sublimeterm_editor", {
-            "action":2,
-            "begin":begin,
-            "end":end,
-            "string":string,
-            "cursor":pos if will_make_selection else -1
+            "action": 2,
+            "begin": begin,
+            "end": end,
+            "string": string,
+            "cursor": pos if will_make_selection else -1
         })
-#        pos = self.console.sel()[0].a
-        print(', '.join(["[{}, {}]".format(sel.a, sel.b) for sel in self.console.sel()]))
+        #        pos = self.console.sel()[0].a
+        debug("NEW SEL IN CONSOLE", ', '.join(["[{}, {}]".format(sel.a, sel.b) for sel in self.console.sel()]))
+        debug("NEW CONSOLE SIZE", self.console.size())
 
-#        if will_make_selection:
-#            #print("DIFFERENT SEL", self.console.sel()[0].a, self.console.sel()[0].b)
-#            self.console.sel().add(sublime.Region(pos))
-#            print("AFTER SEL CORR", ', '.join(["[{}, {}]".format(sel.a, sel.b) for sel in self.console.sel()]))
-#            self.has_just_changed_view = True
-#            sublime_api.view_run_command(self.console.view_id, "sublimeterm_editor", {})
-#        log("POS", self.console.sel()[0].a)
-#        """
-#        """
-#        log("POS2", self.console.sel()[0].a)
+    #        if will_make_selection:
+    #            #debug("DIFFERENT SEL", self.console.sel()[0].a, self.console.sel()[0].b)
+    #            self.console.sel().add(sublime.Region(pos))
+    #            debug("AFTER SEL CORR", ', '.join(["[{}, {}]".format(sel.a, sel.b) for sel in self.console.sel()]))
+    #            self.has_just_changed_view = True
+    #            sublime_api.view_run_command(self.console.view_id, "sublimeterm_editor", {})
+    #        debug("POS", self.console.sel()[0].a)
+    #        """
+    #        """
+    #        debug("POS2", self.console.sel()[0].a)
 
-#        self.last_sel = self.console.sel()[0].a
+    #        self.last_sel = self.console.sel()[0].a
 
-#         We infer the future position of the cursor and sync it
-#         in the class to avoid no-new content detection
-#        added = pos+len(string)-size
-#        if added > 0 and self.last_sel >= pos:
-#            self.last_sel += added
+    #         We infer the future position of the cursor and sync it
+    #         in the class to avoid no-new content detection
+    #        added = pos+len(string)-size
+    #        if added > 0 and self.last_sel >= pos:
+    #            self.last_sel += added
 
     """
     Erase everything after pos
@@ -288,7 +309,8 @@ class SublimetermViewController():
     so we must hide it
     Ex : do you want ... ? y/n -> y -> y is not displayed
     """
-    def erase(self, begin, end = -1):
+
+    def erase(self, begin, end=-1):
         if self.stop:
             return
 
@@ -301,16 +323,16 @@ class SublimetermViewController():
         self.has_just_changed_view = True
 
         sublime_api.view_run_command(self.console.view_id, "sublimeterm_editor", {
-            "action":1,
-            "begin":begin,
-            "end":end,
+            "action": 1,
+            "begin": begin,
+            "end": end,
         })
-
 
     """
     Puts the cursor as the desired position in the view
     The wanted position should NOT be inferior the view size
     """
+
     def place_cursor(self, pos):
         if self.stop:
             return
@@ -318,7 +340,7 @@ class SublimetermViewController():
         self.no_input_event.wait()
 
         self.last_sel = self.console.sel()[0].a
-        log("SCREEN SIZE", self.console.size(), "WANTED", pos, "CURRENT", self.last_sel)
+        debug(str(("SCREEN SIZE", self.console.size(), "WANTED", pos, "CURRENT", self.last_sel)))
         if self.console.size() < pos:
 
             self.console.sel().clear()
@@ -326,9 +348,9 @@ class SublimetermViewController():
             self.has_just_changed_view = True
 
             sublime_api.view_run_command(self.console.view_id, "sublimeterm_editor", {})
-            log("THERE MUST BE AN ERROR")
+            debug("THERE MUST BE AN ERROR")
             """
-            log("INSERT TO FILL", "SIZE", self.console.size(), "POS", pos, "CURRENT", self.console.sel()[0].a)
+            debug("INSERT TO FILL", "SIZE", self.console.size(), "POS", pos, "CURRENT", self.console.sel()[0].a)
             num = pos - self.console.size()
             sublime_api.view_run_command(self.console.view_id, "sublimeterm_editor", {
                 "action":0,
@@ -343,7 +365,7 @@ class SublimetermViewController():
             self.console.sel().clear()
             self.console.sel().add(sublime.Region(pos))
             self.has_just_changed_view = True
-            sublime_api.view_run_command(self.console.view_id, "sublimeterm_editor", {"begin":pos})
+            sublime_api.view_run_command(self.console.view_id, "sublimeterm_editor", {"begin": pos})
         self.last_sel = pos
         self.show_cursor()
 
@@ -357,12 +379,13 @@ class SublimetermViewController():
     Open the view we're going to work in and
     lock it (read_only) until everything is set
     """
-    def open_view(self, output_panel = False):
+
+    def open_view(self, output_panel=False):
         window = sublime.active_window()
         if not output_panel:
             self.console = window.open_file("sublimeterm.output")
             self.console.set_scratch(True)
-#            self.console.set_name("Sublimeterm console")
+            #            self.console.set_name("Sublimeterm console")
             self.console.set_read_only(False)
             window.focus_view(self.console)
         else:
@@ -383,13 +406,14 @@ class SublimetermViewController():
     """
     Puts the cursor at the 3/4 of the viewport if it is further
     """
+
     def show_cursor(self):
         (w, h) = self.console.viewport_extent()
-        (x, y) = self.console.text_to_layout(self.console.sel()[0].a)#viewport_position()
+        (x, y) = self.console.text_to_layout(self.console.sel()[0].a)  # viewport_position()
         (cx, cy) = self.console.viewport_position()
         return
-        next_cy = y-h*0.75
-        if cy < next_cy and y > h*0.75:
+        next_cy = y - h * 0.75
+        if cy < next_cy and y > h * 0.75:
             pass
         else:
             return
@@ -401,8 +425,8 @@ class SublimetermViewController():
             return None
         self.last_width = w
         self.last_height = h
-        print("SIZE CHANGE", w/self.console.em_width(), h/self.console.line_height())
-        return (int(w/self.console.em_width())-3, int(h/self.console.line_height())-1, int(w), int(h))
+        debug("SIZE CHANGE", w / self.console.em_width(), h / self.console.line_height())
+        return (int(w / self.console.em_width()) - 3, int(h / self.console.line_height()) - 1, int(w), int(h))
 
     def keep_listening(self):
         dep_console_position = None
@@ -412,7 +436,7 @@ class SublimetermViewController():
                 break
             try:
                 if self.has_unprocessed_inputs:
-                    (action, content) = self.input_queue.get(block = False)
+                    (action, content) = self.input_queue.get(block=False)
                 else:
                     (action, content) = self.input_queue.get(timeout=1)
             except Empty:
@@ -422,21 +446,21 @@ class SublimetermViewController():
                     self.input_transcoder.set_size(*size)
                     self.output_transcoder.set_size(*size)
                 elif self.has_unprocessed_inputs:
-                    log("INPUT QUEUE EMPTY")
+                    debug("INPUT QUEUE EMPTY")
                 self.has_unprocessed_inputs = False
                 self.lock.release()
             else:
                 self.lock.acquire()
-#                time.sleep(0.3)
+                #                time.sleep(0.3)
 
                 if action == 2:
-                    if dep_console_position == None:
+                    if dep_console_position is None:
                         dep_console_position = content
                     else:
                         dep_console_position += content
                 else:
                     self.has_unprocessed_inputs = True
-                    if dep_console_position != None:
+                    if dep_console_position is not None:
                         self.input_transcoder.move(dep_console_position)
                         dep_console_position = None
                     if action == 0:
@@ -444,10 +468,9 @@ class SublimetermViewController():
                     elif action == 1:
                         self.input_transcoder.erase(content)
                 self.lock.release()
-        log("EDITING ENDED")
+        debug("EDITING ENDED")
 
-
-    def compute_correction(self, proc_mod_begin, proc_mod_end, proc_mod_delta, content = None):
+    def compute_correction(self, proc_mod_begin, proc_mod_end, proc_mod_delta, content=None):
         """ If the process inserted some characters, ie did not replace those under the cursor at
             there position, then the view should "insert" them, ie put them in a region smaller than
             the size of the content, thus '- proc_mod_delta' """
@@ -464,8 +487,11 @@ class SublimetermViewController():
             corr_proc_begin = corr_view_begin
             corr_proc_end = corr_view_end - self.view_mod_delta + proc_mod_delta
 
-            log("VIEW MOD [", self.view_mod_begin, ",", self.view_mod_end, "]", "PROC MOD [", proc_mod_begin, ",", proc_mod_end, "]", "PROC DELTA", proc_mod_delta, "VIEW DELTA", self.view_mod_delta, "CORR VIEW : [", corr_proc_begin, ",", corr_view_end, "], ", "CORR PROC : [", corr_proc_begin, ",", corr_proc_end, "]")
-        else :
+            debug("VIEW MOD [", self.view_mod_begin, ",", self.view_mod_end, "]", "PROC MOD [", proc_mod_begin, ",",
+                      proc_mod_end, "]", "PROC DELTA", proc_mod_delta, "VIEW DELTA", self.view_mod_delta,
+                      "CORR VIEW : [", corr_proc_begin, ",", corr_view_end, "], ", "CORR PROC : [", corr_proc_begin,
+                      ",", corr_proc_end, "]")
+        else:
             """ Where will we change the content in the view ? """
             corr_view_begin = proc_mod_begin
             corr_view_end = proc_mod_end - proc_mod_delta
@@ -474,13 +500,16 @@ class SublimetermViewController():
             corr_proc_begin = corr_view_begin
             corr_proc_end = corr_view_end + proc_mod_delta
 
-            log("NOT DIRTY", "PROC MOD [", proc_mod_begin, ",", proc_mod_end, "]", "PROC DELTA", proc_mod_delta, "CORR VIEW : [", corr_proc_begin, ",", corr_view_end, "], ", "CORR PROC : [", corr_proc_begin, ",", corr_proc_end, "]")
+            debug("NOT DIRTY", "PROC MOD [", proc_mod_begin, ",", proc_mod_end, "]", "PROC DELTA", proc_mod_delta,
+                      "CORR VIEW : [", corr_view_begin, ",", corr_view_end, "], ", "CORR PROC : [", corr_proc_begin,
+                      ",", corr_proc_end, "]")
 
         """ If we need more content that what has been given by the get_last_output function """
-        if content == None or corr_view_begin < proc_mod_begin or proc_mod_end < corr_proc_end:
+        if content is None or corr_view_begin < proc_mod_begin or proc_mod_end < corr_proc_end:
             content = self.output_transcoder.get_between(corr_proc_begin, corr_proc_end)
 
         self.write_output(corr_view_begin, corr_view_end, content)
+        debug("OUTPUT WRITTEN")
 
         self.is_content_dirty = False
 
@@ -496,20 +525,25 @@ class SublimetermViewController():
             try:
                 # in those particuliar circumstances, we do not want to wait
                 if has_unprocessed_outputs or self.has_unprocessed_inputs:
-                    (content, proc_mod_begin, position, proc_mod_end, proc_mod_delta, self.content_size) = self.output_transcoder.pop_output()
+                    (content, proc_mod_begin, position, proc_mod_end, proc_mod_delta,
+                     self.content_size) = self.output_transcoder.pop_output()
                 else:
-                    (content, proc_mod_begin, position, proc_mod_end, proc_mod_delta, self.content_size) = self.output_transcoder.pop_output(timeout = 0.1)
-                print("TXT: {}, MIN:{}, POS:{}, MAX:{}, INSERT_NB:{}, TOTAL:{}".format(repr(content), proc_mod_begin, position, proc_mod_end, proc_mod_delta, self.content_size))
+                    (content, proc_mod_begin, position, proc_mod_end, proc_mod_delta,
+                     self.content_size) = self.output_transcoder.pop_output(timeout=0.1)
+                debug(
+                    "TXT: {}, MIN:{}, POS:{}, MAX:{}, INSERT_NB:{}, TOTAL:{}".format(repr(content), proc_mod_begin,
+                                                                                     position, proc_mod_end,
+                                                                                     proc_mod_delta, self.content_size))
             except Empty:
                 self.lock.acquire()
-#                log("GOT HERE BECAUSE", self.has_unprocessed_inputs, has_unprocessed_outputs)
+                #                debug("GOT HERE BECAUSE", self.has_unprocessed_inputs, has_unprocessed_outputs)
                 if self.is_content_dirty and not self.has_unprocessed_inputs:
-                    print("CONTENT DIRTY AND END OF INPUTS", has_unprocessed_outputs)
+                    debug("CONTENT DIRTY AND END OF INPUTS", has_unprocessed_outputs)
                     self.cancel_view_mod()
                     self.is_cursor_dirty = True
 
                 if self.is_cursor_dirty:
-                    print("END OF OUTPUT AND CURSOR DIRTY")
+                    debug("END OF OUTPUT AND CURSOR DIRTY")
                     self.place_cursor(position)
                     self.is_cursor_dirty = False
                     self.show_cursor()
@@ -530,13 +564,13 @@ class SublimetermViewController():
                 We replace the view content between those limits
                 """
 
-#                if will_clean_to_min_change:
-#                    log("CONTENT DIRTY, ERASE TO FIRST CHANGE")
-#                    self.erase(replace_view_end, self.view_mod_begin)
-#                if will_clean_to_end:
-#                    log("CONTENT NOT DIRTY, ERASE TO END")
-#                    self.erase(self.content_size)
-#                    self.is_content_dirty = False
+                #                if will_clean_to_min_change:
+                #                    debug("CONTENT DIRTY, ERASE TO FIRST CHANGE")
+                #                    self.erase(replace_view_end, self.view_mod_begin)
+                #                if will_clean_to_end:
+                #                    debug("CONTENT NOT DIRTY, ERASE TO END")
+                #                    self.erase(self.content_size)
+                #                    self.is_content_dirty = False
 
 
                 """
@@ -548,18 +582,17 @@ class SublimetermViewController():
                 If there are no further user-interactions to treat
                 we update the cursor position
                 """
-#                if not self.has_unprocessed_inputs:
-#                    log("NO OTHER INPUTS TO TREAT")
-#                    self.place_cursor(position)
-#                    self.show_cursor()
-#                else:
+                #                if not self.has_unprocessed_inputs:
+                #                    debug("NO OTHER INPUTS TO TREAT")
+                #                    self.place_cursor(position)
+                #                    self.show_cursor()
+                #                else:
                 self.is_cursor_dirty = True
                 self.lock.release()
-        log("LISTENING ENDED")
+        debug("LISTENING ENDED")
 
 
 def main():
-
     input_transcoder = InputTranscoder()
     output_transcoder = ANSIOutputTranscoder()
 
@@ -575,7 +608,7 @@ def main():
         while True:
             time.sleep(10)
     except KeyboardInterrupt:
-        log("\nINTERRUPTION !")
+        debug("\nINTERRUPTION !")
         pty.close()
         view_controller.close()
 

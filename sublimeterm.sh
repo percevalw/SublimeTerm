@@ -14,6 +14,7 @@ export INPUTRC="/Users/perceval/Library/Application Support/Sublime Text 3/Packa
 #/Applications/Postgres.app/Contents/Versions/latest/bin/psql bde -c 'select * from "Associations";'
 #/Applications/Postgres.app/Contents/Versions/9.5/bin/psql bde
 #echo -e "+-------------------------------+\n| WELCOLME TO SUBLIME SUBLIMETERM ! |\n+-------------------------------+\n"
-/bin/bash
+~/anaconda/bin/ipython
+#~/bin/bash
 #echo "PHRASE A ECRIRE \n DEUIXEME PHRASE"
 #--output=/Users/perceval/fichier.out

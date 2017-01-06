@@ -85,6 +85,7 @@ class SublimetermViewController():
         self.input_transcoder = input_transcoder
         self.output_transcoder = output_transcoder
 
+        self.cache_cursor_dep = False
         self.dont_notify_for_selection = False
         self.no_input_event = Event()
         self.no_input_event.set()
@@ -349,6 +350,10 @@ class SublimetermViewController():
 
             sublime_api.view_run_command(self.console.view_id, "sublimeterm_editor", {})
             debug("THERE MUST BE AN ERROR")
+
+            time.sleep(2)
+
+            self.cancel_view_mod()
             """
             debug("INSERT TO FILL", "SIZE", self.console.size(), "POS", pos, "CURRENT", self.console.sel()[0].a)
             num = pos - self.console.size()
@@ -429,7 +434,7 @@ class SublimetermViewController():
         return (int(w / self.console.em_width()) - 3, int(h / self.console.line_height()) - 1, int(w), int(h))
 
     def keep_listening(self):
-        dep_console_position = None
+        cached_cursor_dep = None
         (action, content) = (-1, "")
         while True:
             if self.stop:
@@ -453,20 +458,22 @@ class SublimetermViewController():
                 self.lock.acquire()
                 #                time.sleep(0.3)
 
-                if action == 2:
-                    if dep_console_position is None:
-                        dep_console_position = content
+                if action == 2 and self.cache_cursor_dep is True:
+                    if cached_cursor_dep is None:
+                        cached_cursor_dep = content
                     else:
-                        dep_console_position += content
+                        cached_cursor_dep += content
                 else:
                     self.has_unprocessed_inputs = True
-                    if dep_console_position is not None:
-                        self.input_transcoder.move(dep_console_position)
-                        dep_console_position = None
+                    if cached_cursor_dep is not None and self.cache_cursor_dep is True:
+                        self.input_transcoder.move(cached_cursor_dep)
+                        cached_cursor_dep = None
                     if action == 0:
                         self.input_transcoder.write(content)
                     elif action == 1:
                         self.input_transcoder.erase(content)
+                    elif action == 2 and self.cache_cursor_dep is False:
+                        self.input_transcoder.move(content)
                 self.lock.release()
         debug("EDITING ENDED")
 
@@ -493,7 +500,7 @@ class SublimetermViewController():
                       ",", corr_proc_end, "]")
         else:
             """ Where will we change the content in the view ? """
-            corr_view_begin = proc_mod_begin
+            corr_view_begin = min(proc_mod_begin, self.console.size())
             corr_view_end = proc_mod_end - proc_mod_delta
 
             """ What are we going to put there """
@@ -509,7 +516,7 @@ class SublimetermViewController():
             content = self.output_transcoder.get_between(corr_proc_begin, corr_proc_end)
 
         self.write_output(corr_view_begin, corr_view_end, content)
-        debug("OUTPUT WRITTEN")
+        debug("OUTPUT WRITTEN BEWTEEN {} and {}: {} (len {})".format(corr_view_begin, corr_view_end, content if len(content) <= 10 else content[:4] + '...' + content[-4:], len(content)))
 
         self.is_content_dirty = False
 

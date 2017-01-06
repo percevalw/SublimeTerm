@@ -384,12 +384,16 @@ class OutputTranscoder():
         debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
                   "LINES :", self.lines)
         self.clean_cursor()
-        (max_x, remaining, cursor) = self.x_stat_line(self.y, self.x, self.cursor)
         if len(self.lines) - 1 == self.y:
             return
-        self.max_seq_cursor = min(cursor, self.max_seq_cursor)
-        del self.content[cursor:]
+        # self.max_seq_cursor = min(self.cursor, self.max_seq_cursor)
+        del self.content[self.cursor:]
         del self.lines[self.y + 1:]
+
+        (max_x, remaining, cursor) = self.x_stat_line(self.y, self.x, self.cursor)
+        debug("REMAINING max_x:{}, remaining:{}, end_line_cursor:{}".format(max_x, remaining, cursor))
+
+        self.lines[self.y] -= remaining
         debug("AFTER -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
                   "LINES :", self.lines)
         debug("TOUT :{}\n------".format(self.content))

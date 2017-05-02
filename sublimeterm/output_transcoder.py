@@ -19,28 +19,49 @@ __all__ = ['OutputTranscoder']
 class OutputTranscoder():
     def __init__(self):
 
+        # Cursor coords to store the wanted position
+        # temporarily, waiting for the buffer to clean
+        # it all by adding lines, spaces and updating 
+        # the offsets
         self.x = 0
         self.y = 0
-        self.cursor = 0
-        self.min_seq_cursor = 0
-        self.max_seq_cursor = 0
+
+        # Cursor need to be 'cleaned' to match `self.x
+        # and `self.y`
         self.dirty_cursor = False
         self.last_clean_x = 0
         self.last_clean_y = 0
 
-        self.content = []
-        self.lines = [0]
+        # Offset of the current cursor
+        self.cursor = 0
 
-        self.changed_event = Event()
-        self.changed_content = ""
+        # Current changes min and max offsets from the
+        # beginning of the file
+        self.min_seq_cursor = 0
+        self.max_seq_cursor = 0
+
+        # Content of the buffer
+        self.content = []
         self.content_size = 0
         self.last_content_size = 0
+
+        # Lines sizes
+        self.lines = [0]
+
+        # Change event when a new stream has been inputted into the buffer
+        self.changed_event = Event()
+        self.changed_content = ""
         self.flushed = True
+
+        # Prevent the buffer from launshing multiple `changed_event` at the same time
         self.io_mutex = Lock()
+
+        # Prevent the buffer from receiving multiple streams at the same time
         self.is_processing = Lock()
 
         self.max_lines = 5
 
+        # Alternate buffer mode and saving variables
         self.asb_mode = False
         self.saved_content = None
         self.saved_lines = None
@@ -50,10 +71,20 @@ class OutputTranscoder():
         self.max_lines = h
 
     def close(self):
+        """Ends the listening of the process"""
         self.loop = False
         self.join()
 
+    
     def convert_xy(self, offset):
+        """Convert offset to 2D position
+        
+        Arguments:
+            offset {int} -- char index since the beginning of the file
+
+        Returns:
+            (int, int) -- 2D position (horizontal position, line number)
+        """
         o = offset
         for (y, line) in enumerate(self.lines):
             if o < line or (o <= line and y == len(self.lines) - 1):
@@ -64,6 +95,18 @@ class OutputTranscoder():
         return (o, len(self.lines))
 
     def convert_offset(self, x, y):
+        """Convert 2D position to an offset
+        
+        Arguments:
+            x {int} -- horizontal position on the line
+            y {int} -- line number
+        
+        Returns:
+            int -- char index since the beginning of the file
+        
+        Raises:
+            Exception -- Line number is bigger than lines count
+        """
         offset = x
         if y >= len(self.lines):
             raise Exception
@@ -72,6 +115,11 @@ class OutputTranscoder():
         return offset
 
     def begin_sequence(self):
+        """Begin a character input sequence
+        
+        Locks the buffer and inits the sequence delimiters if the
+        last changes have been flushed to the real screen (Sublime Text)
+        """
         with self.io_mutex:
             self.is_processing.acquire()
             if self.flushed:
@@ -80,6 +128,13 @@ class OutputTranscoder():
                 self.last_content_size = len(self.content)
 
     def end_sequence(self):
+        """Ends the character input sequence
+        
+        Updates the changed portion of the buffer and notifies
+        the potential observer of a change through the "changed_event"
+        event.
+        Frees the locked buffer.
+        """
         self.clean_cursor()
         with self.io_mutex:
             self.changed_content = ''.join(self.content[self.min_seq_cursor:self.max_seq_cursor])
@@ -91,6 +146,21 @@ class OutputTranscoder():
             self.is_processing.release()
 
     def pop_output(self, timeout=-1):
+        """Waits and return changes in the buffer
+        
+        Waits for the "changed_event" event and flush 
+        the changed portion of the buffer to the caller
+        if there are changes
+        
+        Keyword Arguments:
+            timeout {number} -- Timeout for the changes in the buffer (default: {-1})
+        
+        Returns:
+            string -- changes in the buffer
+
+        Raises:
+            Empty -- No change in the buffer
+        """
         if (timeout < 0 and not self.changed_event.is_set()) or not self.changed_event.wait(timeout=timeout):
             raise Empty
         else:
@@ -101,9 +171,32 @@ class OutputTranscoder():
                         self.content_size - self.last_content_size, self.content_size)
 
     def get_between(self, begin, end):
+        """Returns a portion of the buffer
+        
+        Returns a portion of the buffer between `begin` and `end`
+        
+        Arguments:
+            begin {int} -- Begin cursor
+            end {int} -- End cursor
+
+        Returns:
+            string -- portion of the buffer
+        """
         return ''.join(self.content[begin:end])
 
     def write_char(self, ch, insert_after=False):
+        """Writes a char to the buffer
+        
+        Replace the char at the cursor by `ch` and moves the
+        cursor forward if `insert_after` is True
+        
+        Arguments:
+            ch {char} -- Input char to write
+        
+        Keyword Arguments:
+            insert_after {bool} -- Move the cursor forward (default: {False})
+        """
+
         debug("\n<< PUT", repr(ch))
         debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
                   "LINES :", self.lines)
@@ -121,10 +214,9 @@ class OutputTranscoder():
             self.x += 1
             self.cursor += 1
 
-        """
-        We didn't do anything extravagant during those last lines,
-        like changing line for example, thus we don't need to "clean" the cursor
-        """
+        
+        # We didn't do anything extravagant during those last lines,
+        # like changing line for example, thus we don't need to "clean" the cursor
         self.last_clean_x = self.x
         debug("AFTER  -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
                   "LINES :", self.lines)
@@ -132,6 +224,17 @@ class OutputTranscoder():
     #        debug("TOUT :{}\n------".format(self.content))
 
     def write(self, string, insert_after=False):
+        """Writes a string to the buffer
+        
+        Replace the chars after the cursor by `string` and moves the
+        cursor forward if `insert_after` is True
+        
+        Arguments:
+            string {string} -- Input string to write
+        
+        Keyword Arguments:
+            insert_after {bool} -- Move the cursor forward (default: {False})
+        """
         if string == '\n':
             self.crlf()
         elif string == '\r':
@@ -141,6 +244,7 @@ class OutputTranscoder():
                 self.write_char(ch, insert_after)
 
     def lf(self):
+        """Writes the Line Feed control char"""
         debug("\n<< LF")
         debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
                   "LINES :", self.lines)
@@ -151,6 +255,7 @@ class OutputTranscoder():
         debug("TOUT :{}\n------".format(self.content))
 
     def cr(self):
+        """Writes the Carriage Return control char"""
         debug("\n<< CR")
         debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
                   "LINES :", self.lines)
@@ -161,6 +266,8 @@ class OutputTranscoder():
         debug("TOUT :{}\n------".format(self.content))
 
     def crlf(self):
+        """Writes the Carriage Return + Line Feed control chars"""
+
         debug("\n<< CRLF")
         debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
                   "LINES :", self.lines)
@@ -172,32 +279,59 @@ class OutputTranscoder():
         debug("TOUT :{}\n------".format(self.content))
 
     def move_to(self, x=-1, y=-1):
+        """Changes the cursor position
+        
+        Sets new 2D coords for the cursor but does not
+        change the offset yet (see `clean_cursor` for that)
+
+        """
+
         debug("MOVING TO", x, y)
         self.dirty_cursor = True
         if x >= 1: self.x = x - 1
         if y >= 1: self.y = y - 1
 
     def move_backward(self, n=1):
+        """Moves backward of `n` positions"""
         debug("MOVING BACKWARD", n)
         self.dirty_cursor = True
         self.x -= n
 
     def move_forward(self, n=1):
+        """Moves forward of `n` positions"""
         debug("MOVING FORWARD", n)
         self.dirty_cursor = True
         self.x += n
 
     def move_up(self, n=1):
+        """Moves up of `n` lines"""
         debug("MOVING UP", n)
         self.dirty_cursor = True
         self.y -= n
 
     def move_down(self, n=1):
+        """Moves down of `n` lines"""
         debug("MOVING DOWN", n)
         self.dirty_cursor = True
         self.y += n
 
     def x_stat_line(self, y, x=-1, cursor=-1):
+        """Returns information about the line `y`
+        
+        [description]
+        
+        Arguments:
+            y {[type]} -- Line number of the cursor
+        
+        Keyword Arguments:
+            x {number} -- Optional horizontal position of the cursor
+            cursor {number} -- Optional offset of the cursor
+        
+        Returns:
+            tuple -- Only `y` : (size of the line)
+                  -- `y` and `x` : (size of the line, distance to end of line)
+                  -- `y`, `x` and `cursor` : (size of the line, distance to end of line, offset of last char in line)
+        """
         max_x = self.lines[y]
         last_one = len(self.lines) == y + 1
         if not last_one:
@@ -210,6 +344,11 @@ class OutputTranscoder():
             return max_x
 
     def clean_cursor(self):
+        """Update the buffer to match the coords `self.x` and `self.y`
+        
+        Changes the offset, adds line and spaces if needed to make 
+        the cursors match the 2D coords
+        """
         if not self.dirty_cursor:
             return
         dirty_x = self.x
@@ -292,6 +431,7 @@ class OutputTranscoder():
         debug("CLEAN CURSOR", self.cursor, self.x, self.y)
 
     def erase_end_of_line(self):
+        """Erases the end of the current line"""
         debug("ERASE END OF LINE")
         debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
                   "LINES :", self.lines)
@@ -314,6 +454,7 @@ class OutputTranscoder():
         debug("TOUT :{}\n------".format(self.content))
 
     def erase_start_of_line(self):
+        """Erases the start of the current line"""
         debug("ERASE START OF LINE")
         self.clean_cursor()
 
@@ -326,6 +467,7 @@ class OutputTranscoder():
         self.cursor = fr
 
     def erase_line(self):
+        """Erases the current line"""
         debug("ERASE LINE")
         self.clean_cursor()
 
@@ -347,6 +489,7 @@ class OutputTranscoder():
         del self.content[fr:to]
 
     def erase_screen(self):
+        """Erases the full buffer"""
         debug("ERASE SCREEN")
         self.cursor = 0
         self.y = 0
@@ -361,6 +504,7 @@ class OutputTranscoder():
         self.lines = [0]
 
     def erase_forward(self, num):
+        """Erases the `num` characters after the cursor on the current line"""
         debug("ERASE FORWARD", num)
         debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
                   "LINES :", self.lines)
@@ -380,6 +524,7 @@ class OutputTranscoder():
         debug("TOUT :{}\n------".format(self.content))
 
     def erase_down(self):
+        """Erases the `num` lines after the cursor"""
         debug("ERASE DOWN")
         debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
                   "LINES :", self.lines)
@@ -399,6 +544,8 @@ class OutputTranscoder():
         debug("TOUT :{}\n------".format(self.content))
 
     def switchASBOn(self):
+        """Switch the buffer to alternative mode (VI for ex)"""
+
         if self.asb_mode:
             return
 
@@ -412,6 +559,7 @@ class OutputTranscoder():
         debug("SAVED LINES", self.saved_lines, "CURSOR", self.saved_cursor, "BEFORE X, Y", self.x, self.y)
 
     def switchASBOff(self):
+        """Switch the buffer to normal mode (BASH for ex)"""
         if not self.asb_mode:
             return
 

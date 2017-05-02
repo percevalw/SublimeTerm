@@ -1,5 +1,6 @@
 {
     "color_scheme": "Packages/Sublimeterm/Sublimeterm.tmTheme",
     "scroll_past_end": true,
-    "tab_size": 8
+    "tab_size": 8,
+    "translate_tabs_to_spaces": false
 }

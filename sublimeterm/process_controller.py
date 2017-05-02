@@ -61,10 +61,17 @@ class ProcessController:
         self.stop = False
 
     def start(self, command):
-        """ Create the PTY """
+        """Start the process controller
+        
+        Creates the threads and launsh the process
+        
+        Arguments:
+            command {list} -- command list for the process (ex: ['ls', '-la'])
+        """
+        # Create the PTY
         self.spawn(command)
 
-        """ Loops """
+        # Loops
         self.read_thread = Thread(target=self.keep_reading)
         self.write_thread = Thread(target=self.keep_writing)
 
@@ -72,6 +79,10 @@ class ProcessController:
         self.write_thread.start()
 
     def close(self):
+        """Stops the process controller
+        
+        Kill the process
+        """
         self.stop = True
 
         try:
@@ -83,6 +94,13 @@ class ProcessController:
         ProcessController.instance = None
 
     def spawn(self, command):
+        """Starts the process
+        
+        Spawn a new process and register the listeners on it
+        
+        Arguments:
+            command {list} -- command list for the process (ex: ['ls', '-la'])
+        """
         self.master, self.slave = os.openpty()
         self.process = subprocess.Popen(command,
                                         stdin=self.slave,
@@ -91,6 +109,10 @@ class ProcessController:
                                         preexec_fn=os.setsid)
 
     def keep_reading(self):
+        """Output thread method for the process
+        
+        Sends the process output to the ViewController (through OutputTranscoder)
+        """
         while True:
             if self.stop:
                 break
@@ -105,6 +127,10 @@ class ProcessController:
             #                log_debug("{} >> {}".format(int(time.time()), repr(text)))
 
     def keep_writing(self):
+        """Input thread method for the process
+        
+        Sends the user inputs (from InputTranscoder) to the process
+        """
         while True:
             if self.stop:
                 break

@@ -11,10 +11,11 @@ variables:
 
 contexts:
   main:
-    - match: '^.*?\$'
-      scope: prompt
-    - match: '{{p1}}'
-      set: o1_2
+    - meta_scope: normal
+    #- match: '^.*?\$'
+    #  scope: prompt
+    #- match: '{{p1}}'
+    #  set: o1_2
   o1_2:
     - match: '{{p1}}'
       set: o1_3

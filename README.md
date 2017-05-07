@@ -1,11 +1,13 @@
 SublimeTerm
 ===========
 
+[![Build Status](https://travis-ci.org/percevalw/Sublimeterm.svg?branch=master)](https://travis-ci.org/percevalw/Sublimeterm) [![codecov](https://codecov.io/gh/percevalw/Sublimeterm/branch/master/graph/badge.svg)](https://codecov.io/gh/percevalw/Sublimeterm)
+
 *STILL IN DEVELOPMENT*
 
 SublimeTerm is a plugin for Sublime Text that allows you to run a shell in your editor.
 
-VI and other readline-intensive programs (iPython, PSQL, ...) seem to work.
+VI and other readline-intensive programs (iPython, PSQL, ...) should run fine.
 
 ![](https://raw.githubusercontent.com/percevalw/Sublimeterm/master/doc/demo.gif)
 

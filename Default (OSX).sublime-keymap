@@ -1,39 +1,39 @@
 [
     {
     "keys": ["ctrl+option+&"],
-    "command": "sublimeterm",
+    "command": "term",
        "args" : {"make_new":true}
     },
     {
     "keys": ["ctrl+option+a"],
-    "command": "sublimeterm",
+    "command": "term",
        "args" : {"make_new":false}
     },
     {
         "keys": ["tab"],
-        "command": "sublimeterm",
+        "command": "term",
         "args" : {"key":"tab"},
         "context":  [{ "key": "sublimeterm_event"}]
     },{
         "keys": ["escape"],
-        "command": "sublimeterm",
+        "command": "term",
         "args" : {"key":"escape"},
         "context":  [{ "key": "sublimeterm_event"}]
     },{
         "keys": ["down"],
-        "command": "sublimeterm",
+        "command": "term",
         "args" : {"key":"down"},
         "context":  [{ "key": "sublimeterm_event"}]
     },
     {
         "keys": ["up"],
-        "command": "sublimeterm",
+        "command": "term",
         "args" : {"key":"up"},
         "context":  [{ "key": "sublimeterm_event"}]
     },
     {
         "keys": ["enter"],
-        "command": "sublimeterm",
+        "command": "term",
         "args" : {"key":"enter"},
         "context":  [{ "key": "sublimeterm_event"}]
     }

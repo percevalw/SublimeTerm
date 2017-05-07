@@ -1,4 +1,7 @@
-#!/usr/bin/env python
+# Copyright (C) 2016-2017 Perceval Wajsburt <perceval.wajsburt@gmail.com>
+#
+# This module is part of SublimeTerm and is released under
+# the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 """
 ##################
@@ -130,6 +133,13 @@ class SublimetermViewController():
 
         self.stop = True
         SublimetermViewController.instance = None
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def on_modified(self):
         """ View content modification listener method
@@ -282,7 +292,7 @@ class SublimetermViewController():
         self.has_just_changed_view = True
         will_make_selection = pos == begin == end
         #        debug("POS0", self.console.sel()[0].a)
-        sublime_api.view_run_command(self.console.view_id, "sublimeterm_editor", {
+        sublime_api.view_run_command(self.console.view_id, "term_editor", {
             "action": 2,
             "begin": begin,
             "end": end,
@@ -298,7 +308,7 @@ class SublimetermViewController():
     #            self.console.sel().add(sublime.Region(pos))
     #            debug("AFTER SEL CORR", ', '.join(["[{}, {}]".format(sel.a, sel.b) for sel in self.console.sel()]))
     #            self.has_just_changed_view = True
-    #            sublime_api.view_run_command(self.console.view_id, "sublimeterm_editor", {})
+    #            sublime_api.view_run_command(self.console.view_id, "term_editor", {})
     #        debug("POS", self.console.sel()[0].a)
     #        """
     #        """
@@ -330,7 +340,7 @@ class SublimetermViewController():
             return
         self.has_just_changed_view = True
 
-        sublime_api.view_run_command(self.console.view_id, "sublimeterm_editor", {
+        sublime_api.view_run_command(self.console.view_id, "term_editor", {
             "action": 1,
             "begin": begin,
             "end": end,
@@ -355,7 +365,7 @@ class SublimetermViewController():
             self.console.sel().add(sublime.Region(self.last_sel))
             self.has_just_changed_view = True
 
-            sublime_api.view_run_command(self.console.view_id, "sublimeterm_editor", {})
+            sublime_api.view_run_command(self.console.view_id, "term_editor", {})
             debug("THERE MUST BE AN ERROR")
 
             time.sleep(2)
@@ -364,7 +374,7 @@ class SublimetermViewController():
 
             ## debug("INSERT TO FILL", "SIZE", self.console.size(), "POS", pos, "CURRENT", self.console.sel()[0].a)
             ## num = pos - self.console.size()
-            ## sublime_api.view_run_command(self.console.view_id, "sublimeterm_editor", {
+            ## sublime_api.view_run_command(self.console.view_id, "term_editor", {
             ##     "action":0,
             ##     "begin":self.console.size(),
             ##     "string":''.join([' ' for i in range(num)])
@@ -377,7 +387,7 @@ class SublimetermViewController():
             self.console.sel().clear()
             self.console.sel().add(sublime.Region(pos))
             self.has_just_changed_view = True
-            sublime_api.view_run_command(self.console.view_id, "sublimeterm_editor", {"begin": pos})
+            sublime_api.view_run_command(self.console.view_id, "term_editor", {"begin": pos})
         self.last_sel = pos
         self.show_cursor()
 
@@ -400,9 +410,9 @@ class SublimetermViewController():
             self.console.set_read_only(False)
             window.focus_view(self.console)
         else:
-            self.console = window.find_output_panel("sublimeterm")
+            self.console = window.find_output_panel("term")
             if not self.console:
-                self.console = window.create_output_panel("sublimeterm")
+                self.console = window.create_output_panel("term")
             window.run_command("show_panel", {"panel": "output.sublimeterm"})
             self.console.set_read_only(False)
             window.focus_view(self.console)
@@ -581,7 +591,6 @@ class SublimetermViewController():
                 has_unprocessed_outputs = True
 
                 self.compute_correction(proc_mod_begin, proc_mod_end, proc_mod_delta, content)
-
                 # We replace the view content between those limits
 
                 #                if will_clean_to_min_change:

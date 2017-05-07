@@ -6,14 +6,16 @@ from . import sublimeterm
 
 imp.reload(sublimeterm)
 
-"""
-############################
-Sublimeterm Command Class
-Main command class, called 
-at the opening of the plugin
-############################
-"""
-class SublimetermCommand(sublime_plugin.WindowCommand):
+
+class TermCommand(sublime_plugin.WindowCommand):
+    """
+    ############################
+    Sublimeterm Command Class
+    Main command class, called
+    at the opening of the plugin
+    ############################
+    """
+
     def run(self, make_new=False, key = None, **kwargs):
         print("command")
         c = sublimeterm.SublimetermViewController.instance
@@ -33,44 +35,33 @@ class SublimetermCommand(sublime_plugin.WindowCommand):
 
         imp.reload(sublimeterm)
 
-        print("\n############ BEGINNING SUBLIME SUBLIMETERM ############")
-        print("NEW", make_new)
-
         # RELOADING SETTINGS
-        self.settings = sublime.load_settings("Sublimeterm.sublime-settings")
-        print("VERSION", sys.version_info)
-        print("CWD", os.getcwd())
-#        if c and not make_new:
-#            c.open_view()
-#            c.clean_console()
-#        else:
+        self.settings = sublime.load_settings("Term.sublime-settings")
+
+        root = os.path.dirname(os.path.realpath(__file__))
+
+        base_cmd = os.path.join(root, "script.sh")
+        tty_cmd = self.settings.get("command", "/bin/bash")
+        tty_cmd = [tty_cmd] if not isinstance(tty_cmd, list) else tty_cmd
 
         it = sublimeterm.InputTranscoder()
         ot = sublimeterm.ANSIOutputTranscoder()
-        view_controller = sublimeterm.SublimetermViewController(it, ot)
-        process_controller = sublimeterm.ProcessController(it, ot)
 
-        cmd = os.path.join(sublime.packages_path(), "Sublimeterm/sublimeterm.sh")
-        print(cmd)
+        view_controller = sublimeterm.SublimetermViewController(it, ot)
+        process_controller = sublimeterm.ProcessController(it, ot, "/bin/bash")
 
         view_controller.start()
-        process_controller.start(cmd)
+        process_controller.start()
 
-#        print(dir(sublime_api))
 
-        #self.place_cursor(0)
-#        def cb():
-#            self.write_output(3, "TEST")
-#        sublime.set_timeout(cb, 2000)
+class TermEditorCommand(sublime_plugin.TextCommand):
+    """
+    ##########################
+    SublimetermEditorCommand Class
+    Used to modify the view
+    ##########################
+    """
 
-#aaaaa aaaaa aaaa dddd ddd ezzzz eee eee 
-"""
-##########################
-SublimetermEditorCommand Class
-Used to modify the view
-##########################
-"""
-class SublimetermEditorCommand(sublime_plugin.TextCommand):
     def run(self, edit, action = 0, begin = 0, end = 0, string = "", cursor = -1):
         if cursor >= 0:
             self.view.sel().clear()
@@ -88,7 +79,12 @@ class SublimetermEditorCommand(sublime_plugin.TextCommand):
             self.view.insert(edit, 0, "")
 
 
-class SublimetermListener(sublime_plugin.EventListener):
+class TermListener(sublime_plugin.EventListener):
+    """
+    TODO : Change this class methods and attributes to static
+    Put most of the SublimetermCommand methods in this one
+    """
+
     def on_text_command(self, window, name, args):
         pass
 
@@ -110,14 +106,9 @@ class SublimetermListener(sublime_plugin.EventListener):
     def on_close(self, view):
         c = sublimeterm.SublimetermViewController.instance
         p = sublimeterm.ProcessController.instance
-        if c.console is not None and view == c.console:
-            print("--------- DESACTIVATED ---------")
+        if c is not None and c.console is not None and view == c.console:
+            print("SublimeTerm closed")
             if p:
                 p.close()
             if c:
                 c.close()
-            #show_console()
-"""
-TODO : Change this class methods and attributes to static
-Put most of the SublimetermCommand methods in this one
-"""

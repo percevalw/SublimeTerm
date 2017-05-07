@@ -1,8 +1,11 @@
+# Copyright (C) 2016-2017 Perceval Wajsburt <perceval.wajsburt@gmail.com>
+#
+# This module is part of SublimeTerm and is released under
+# the MIT License: http://www.opensource.org/licenses/mit-license.php
+
 from unittest import TestCase
 from sublimeterm.ansi_output_transcoder import ANSIOutputTranscoder
-import logging
 
-#logging.basicConfig(level = logging.DEBUG)
 
 class TestANSIOutputTranscoder(TestCase):
     def test_normal_sequence(self):

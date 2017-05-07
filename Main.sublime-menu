@@ -1,0 +1,21 @@
+[
+    {
+        "id": "tools",
+        "children":
+        [{
+            "caption": "Term",
+            "mnemonic": "T",
+            "id": "SublimeTerm",
+            "children":
+            [
+                {
+                    "caption": "Open the terminal",
+                    "mnemonic": "T",
+                    "id": "SublimeTerm",
+                    "command": "term",
+                    "args" : {"make_new":true}
+                }
+            ]
+        }]
+    }
+] 

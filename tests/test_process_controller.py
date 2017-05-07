@@ -1,3 +1,8 @@
+# Copyright (C) 2016-2017 Perceval Wajsburt <perceval.wajsburt@gmail.com>
+#
+# This module is part of SublimeTerm and is released under
+# the MIT License: http://www.opensource.org/licenses/mit-license.php
+
 from unittest import TestCase
 from sublimeterm.process_controller import ProcessController
 
@@ -24,12 +29,12 @@ class TestProcessController(TestCase):
             expected_result = ('Hello World\n', 0, 12, 12, 12, 12)
             self.assertEqual(expected_result, output_transcoder.pop_output(timeout=2))
 
-    def test_bash(self):
+    def test_sh(self):
         input_transcoder = InputTranscoder()
         output_transcoder = ANSIOutputTranscoder()
-        with ProcessController(input_transcoder, output_transcoder, ["/bin/bash"]):
+        with ProcessController(input_transcoder, output_transcoder, ["/bin/sh"], {"PS1": "BASH$"}):
             time.sleep(3)
-            self.assertRegexpMatches(output_transcoder.pop_output(timeout=2)[0], "bash-.*$")
+            self.assertRegexpMatches(output_transcoder.pop_output(timeout=2)[0], "BASH\$")
             input_transcoder.write("pwd\n")
             time.sleep(2)
-            self.assertIn("Sublimeterm/tests", output_transcoder.pop_output(timeout=2)[0])
+            self.assertIn("Sublimeterm", output_transcoder.pop_output(timeout=2)[0])

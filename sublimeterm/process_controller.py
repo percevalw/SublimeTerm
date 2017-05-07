@@ -1,4 +1,7 @@
-#!/usr/bin/env python
+# Copyright (C) 2016-2017 Perceval Wajsburt <perceval.wajsburt@gmail.com>
+#
+# This module is part of SublimeTerm and is released under
+# the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 import fcntl
 import logging
@@ -41,13 +44,13 @@ else:
 class ProcessController:
     instance = None
 
-    def __new__(cls, input_transcoder, output_transcoder, command=None):
+    def __new__(cls, input_transcoder, output_transcoder, command=None, env=None):
         if isinstance(cls.instance, cls):
             cls.instance.close()
         cls.instance = object.__new__(cls)
         return cls.instance
 
-    def __init__(self, input_transcoder, output_transcoder, command=None):
+    def __init__(self, input_transcoder, output_transcoder, command=None, env=None):
         self.master = None
         self.slave = None
         self.process = None
@@ -55,6 +58,7 @@ class ProcessController:
         self.command = command
         self.input_transcoder = input_transcoder
         self.output_transcoder = output_transcoder
+        self.env = env
 
         self.mutex = Lock()
         self.read_thread = None
@@ -68,7 +72,7 @@ class ProcessController:
         it closes the process no matter what happens in the with
         statement body
         """
-        self.start(self.command)
+        self.start()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -80,7 +84,7 @@ class ProcessController:
         """
         self.close()
 
-    def start(self, command):
+    def start(self):
         """Start the process controller
         
         Creates the threads and launsh the process
@@ -89,7 +93,7 @@ class ProcessController:
             command {list} -- command list for the process (ex: ['ls', '-la'])
         """
         # Create the PTY
-        self.spawn(command)
+        self.spawn(self.command, self.env)
 
         # Loops
         self.read_thread = Thread(target=self.keep_reading)
@@ -112,7 +116,7 @@ class ProcessController:
             log_debug("Successfully killed")
         ProcessController.instance = None
 
-    def spawn(self, command):
+    def spawn(self, command, env):
         """Starts the process
         
         Spawn a new process and register the listeners on it
@@ -120,12 +124,17 @@ class ProcessController:
         Arguments:
             command {list} -- command list for the process (ex: ['ls', '-la'])
         """
+
+        child_env = os.environ.copy()
+        child_env.update(env if env is not None else {})
+
         self.master, self.slave = os.openpty()
         self.process = subprocess.Popen(command,
                                         stdin=self.slave,
                                         stdout=self.slave,
                                         stderr=self.slave,
-                                        preexec_fn=os.setsid)
+                                        preexec_fn=os.setsid,
+                                        env=child_env)
 
     def keep_reading(self):
         """Output thread method for the process

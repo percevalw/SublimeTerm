@@ -41,17 +41,18 @@ else:
 class ProcessController:
     instance = None
 
-    def __new__(cls, input_transcoder, output_transcoder):
+    def __new__(cls, input_transcoder, output_transcoder, command=None):
         if isinstance(cls.instance, cls):
             cls.instance.close()
         cls.instance = object.__new__(cls)
         return cls.instance
 
-    def __init__(self, input_transcoder, output_transcoder):
+    def __init__(self, input_transcoder, output_transcoder, command=None):
         self.master = None
         self.slave = None
         self.process = None
 
+        self.command = command
         self.input_transcoder = input_transcoder
         self.output_transcoder = output_transcoder
 
@@ -59,6 +60,25 @@ class ProcessController:
         self.read_thread = None
         self.write_thread = None
         self.stop = False
+
+    def __enter__(self):
+        """Enter the process controller running scope
+
+        with statement is the recommended way to launsh since
+        it closes the process no matter what happens in the with
+        statement body
+        """
+        self.start(self.command)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Enter the process controller running scope
+
+        with statement is the recommended way to launsh since
+        it closes the process no matter what happens in the with
+        statement body
+        """
+        self.close()
 
     def start(self, command):
         """Start the process controller
@@ -84,10 +104,9 @@ class ProcessController:
         Kill the process
         """
         self.stop = True
-
         try:
             os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
-        except:
+        except ProcessLookupError:
             log_debug("Must already be dead")
         else:
             log_debug("Successfully killed")
@@ -155,22 +174,3 @@ class ProcessController:
                     elif input_type == 2:
                         os.killpg(os.getpgid(self.process.pid), content)
                         log_debug("SENDING SIGNAL TO PROCESS", content)
-
-
-def main():
-    input_transcoder = InputTranscoder()
-    output_transcoder = ANSIOutputTranscoder()
-    pty = ProcessController(input_transcoder, output_transcoder)
-    pty.start()
-    time.sleep(3)
-    input_transcoder.write("ls\n")
-    try:
-        while True:
-            time.sleep(10)
-    except KeyboardInterrupt:
-        log_debug("\nINTERRUPTION !")
-        pty.close()
-
-
-if __name__ == '__main__':
-    main()

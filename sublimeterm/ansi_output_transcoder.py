@@ -1,4 +1,4 @@
-'''This implements an ANSI (VT100) terminal emulator as a subclass of screen.
+"""This implements an ANSI (VT100) terminal emulator as a subclass of screen.
 PEXPECT LICENSE
     This license is approved by the OSI and FSF as GPL-compatible.
         http://opensource.org/licenses/isc-license.txt
@@ -13,7 +13,7 @@ PEXPECT LICENSE
     WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
     ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
     OR IN SUBLIMETERMION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-'''
+"""
 
 # references:
 #     http://en.wikipedia.org/wiki/ANSI_escape_code
@@ -231,9 +231,9 @@ def DoModecrapH(fsm):
 
 
 class ANSIOutputTranscoder(OutputTranscoder):
-    '''This class implements an ANSI (VT100) terminal.
+    """This class implements an ANSI (VT100) terminal.
     It is a stream filter that recognizes ANSI terminal
-    escape sequences and maintains the state of a screen object. '''
+    escape sequences and maintains the state of a screen object. """
 
     def __init__(self, *args, **kwargs):
         OutputTranscoder.__init__(self, *args, **kwargs)
@@ -284,11 +284,11 @@ class ANSIOutputTranscoder(OutputTranscoder):
         self.state.add_transition('K', 'NUMBER_1_ELB', DoEraseLine, 'INIT')
         self.state.add_transition('l', 'NUMBER_1_ELB', DoMode, 'INIT')
         self.state.add_transition('@', 'NUMBER_1_ELB', DoInsertSpaces, 'INIT')
-        ### It gets worse... the 'm' code can have infinite number of
-        ### number;number;number before it. I've never seen more than two,
-        ### but the specs say it's allowed. crap!
+        # It gets worse... the 'm' code can have infinite number of
+        # number;number;number before it. I've never seen more than two,
+        # but the specs say it's allowed. crap!
         self.state.add_transition('m', 'NUMBER_1_ELB', self.do_sgr, 'INIT')
-        ### LED control. Same implementation problem as 'm' code.
+        # LED control. Same implementation problem as 'm' code.
         self.state.add_transition('q', 'NUMBER_1_ELB', self.do_decsca, 'INIT')
         # \E[?47h switch to alternate screen
         # \E[?47l restores to normal screen from alternate screen.
@@ -316,11 +316,11 @@ class ANSIOutputTranscoder(OutputTranscoder):
         self.state.add_transition('H', 'NUMBER_2_ELC', DoHome, 'INIT')
         self.state.add_transition('f', 'NUMBER_2_ELC', DoHome, 'INIT')
         self.state.add_transition('r', 'NUMBER_2_ELC', DoScrollRegion, 'INIT')
-        ### It gets worse... the 'm' code can have infinite number of
-        ### number;number;number before it. I've never seen more than two,
-        ### but the specs say it's allowed. crap!
+        # It gets worse... the 'm' code can have infinite number of
+        # number;number;number before it. I've never seen more than two,
+        # but the specs say it's allowed. crap!
         self.state.add_transition('m', 'NUMBER_2_ELC', self.do_sgr, 'INIT')
-        ### LED control. Same problem as 'm' code.
+        # LED control. Same problem as 'm' code.
         self.state.add_transition('q', 'NUMBER_2_ELC', self.do_decsca, 'INIT')
         self.state.add_transition(';', 'NUMBER_2_ELC', None, 'SEMICOLON_X')
 
@@ -345,12 +345,12 @@ class ANSIOutputTranscoder(OutputTranscoder):
 
     @staticmethod
     def do_sgr(fsm):
-        '''Select Graphic Rendition, e.g. color. '''
+        """Select Graphic Rendition, e.g. color. """
         screen = fsm.memory[0]
         fsm.memory = [screen]
 
     @staticmethod
     def do_decsca(fsm):
-        '''Select character protection attribute. '''
+        """Select character protection attribute. """
         screen = fsm.memory[0]
         fsm.memory = [screen]

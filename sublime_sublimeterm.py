@@ -2,8 +2,6 @@ import sublime, sublime_plugin, sublime_api
 import sys, imp, os
 import logging
 
-#logging.basicConfig(level = logging.DEBUG)
-
 from . import sublimeterm
 
 imp.reload(sublimeterm)

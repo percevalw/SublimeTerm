@@ -10,13 +10,15 @@ except ImportError:
 
 logger = logging.getLogger()
 
+
 def debug(*args):
     logger.debug(" ".join(map(str, args)))
+
 
 __all__ = ['OutputTranscoder']
 
 
-class OutputTranscoder():
+class OutputTranscoder:
     def __init__(self):
 
         # Cursor coords to store the wanted position
@@ -70,12 +72,6 @@ class OutputTranscoder():
     def set_size(self, w, h, pw, ph):
         self.max_lines = h
 
-    def close(self):
-        """Ends the listening of the process"""
-        self.loop = False
-        self.join()
-
-    
     def convert_xy(self, offset):
         """Convert offset to 2D position
         
@@ -198,8 +194,9 @@ class OutputTranscoder():
         """
 
         debug("\n<< PUT", repr(ch))
-        debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
-                  "LINES :", self.lines)
+        debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor,
+              self.max_seq_cursor,
+              "LINES :", self.lines)
         self.clean_cursor()
         max_x = self.x_stat_line(self.y)
         if self.x >= max_x or insert_after:  # should be == if there were no problem in the computations before
@@ -214,12 +211,12 @@ class OutputTranscoder():
             self.x += 1
             self.cursor += 1
 
-        
         # We didn't do anything extravagant during those last lines,
         # like changing line for example, thus we don't need to "clean" the cursor
         self.last_clean_x = self.x
-        debug("AFTER  -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
-                  "LINES :", self.lines)
+        debug("AFTER  -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor,
+              self.max_seq_cursor,
+              "LINES :", self.lines)
 
     #        debug("TOUT :{}\n------".format(self.content))
 
@@ -240,42 +237,53 @@ class OutputTranscoder():
         elif string == '\r':
             self.cr()
         else:
+            if insert_after:
+                saved_x = self.x
             for ch in string:
-                self.write_char(ch, insert_after)
+                    self.write_char(ch)
+            if insert_after:
+                self.dirty_cursor = True
+                self.x = saved_x
 
     def lf(self):
         """Writes the Line Feed control char"""
         debug("\n<< LF")
-        debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
-                  "LINES :", self.lines)
+        debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor,
+              self.max_seq_cursor,
+              "LINES :", self.lines)
         self.move_down()
         self.clean_cursor()
-        debug("AFTER  -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
-                  "LINES :", self.lines)
+        debug("AFTER  -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor,
+              self.max_seq_cursor,
+              "LINES :", self.lines)
         debug("TOUT :{}\n------".format(self.content))
 
     def cr(self):
         """Writes the Carriage Return control char"""
         debug("\n<< CR")
-        debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
-                  "LINES :", self.lines)
+        debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor,
+              self.max_seq_cursor,
+              "LINES :", self.lines)
         self.move_to(x=1)
         self.clean_cursor()
-        debug("AFTER  -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
-                  "LINES :", self.lines)
+        debug("AFTER  -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor,
+              self.max_seq_cursor,
+              "LINES :", self.lines)
         debug("TOUT :{}\n------".format(self.content))
 
     def crlf(self):
         """Writes the Carriage Return + Line Feed control chars"""
 
         debug("\n<< CRLF")
-        debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
-                  "LINES :", self.lines)
+        debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor,
+              self.max_seq_cursor,
+              "LINES :", self.lines)
         self.move_down()
         self.move_to(x=1)
         self.clean_cursor()
-        debug("AFTER  -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
-                  "LINES :", self.lines)
+        debug("AFTER  -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor,
+              self.max_seq_cursor,
+              "LINES :", self.lines)
         debug("TOUT :{}\n------".format(self.content))
 
     def move_to(self, x=-1, y=-1):
@@ -430,11 +438,12 @@ class OutputTranscoder():
 
         debug("CLEAN CURSOR", self.cursor, self.x, self.y)
 
-    def erase_end_of_line(self):
+    def  erase_end_of_line(self):
         """Erases the end of the current line"""
         debug("ERASE END OF LINE")
-        debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
-                  "LINES :", self.lines)
+        debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor,
+              self.max_seq_cursor,
+              "LINES :", self.lines)
         self.clean_cursor()
 
         (max_x, remaining, max_cursor) = self.x_stat_line(self.y, self.x, self.cursor)
@@ -449,8 +458,9 @@ class OutputTranscoder():
         self.max_seq_cursor = max(self.max_seq_cursor - remaining, self.cursor)
         self.lines[self.y] -= remaining
         debug("MAX_X = ", max_x)
-        debug("AFTER -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
-                  "LINES :", self.lines)
+        debug("AFTER -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor,
+              self.max_seq_cursor,
+              "LINES :", self.lines)
         debug("TOUT :{}\n------".format(self.content))
 
     def erase_start_of_line(self):
@@ -458,34 +468,27 @@ class OutputTranscoder():
         debug("ERASE START OF LINE")
         self.clean_cursor()
 
-        self.max_seq_cursor -= self.x
         fr = self.cursor - self.x
-        self.lines[self.y] -= self.x
-        self.x = 0
-        self.min_seq_cursor = min(self.cursor, self.min_seq_cursor)
-        del self.content[fr:self.cursor]
-        self.cursor = fr
+        self.min_seq_cursor = min(fr, self.min_seq_cursor)
+        self.content[fr:self.cursor] = [" "]*(self.cursor - fr)
 
     def erase_line(self):
         """Erases the current line"""
         debug("ERASE LINE")
         self.clean_cursor()
 
+        line_width, remaining, to = self.x_stat_line(cursor=self.cursor, x=self.x, y=self.y)
         fr = self.cursor - self.x
-        to = self.cursor + (self.lines[self.y] - self.x)
 
-        # if self.y < len(self.lines)-1:
-        #    self.max_seq_cursor -= self.lines[self.y] - 1
-        #    self.lines[self.y] = 1
-        #    to -= 1
-        # else:
+        self.dirty_cursor = True
         self.x = 0
+        self.clean_cursor()
+
+        self.min_seq_cursor = min(fr, self.min_seq_cursor)
+        self.max_seq_cursor = max(fr, self.max_seq_cursor-line_width)
+        self.lines[self.y] = 1
         self.cursor = fr
-        self.min_seq_cursor = min(self.cursor, self.min_seq_cursor)
-        self.max_seq_cursor -= self.lines[self.y]
-        self.max_seq_cursor = max(self.cursor, self.max_seq_cursor)
-        if self.y > 0:
-            del self.lines[self.y]
+
         del self.content[fr:to]
 
     def erase_screen(self):
@@ -506,8 +509,9 @@ class OutputTranscoder():
     def erase_forward(self, num):
         """Erases the `num` characters after the cursor on the current line"""
         debug("ERASE FORWARD", num)
-        debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
-                  "LINES :", self.lines)
+        debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor,
+              self.max_seq_cursor,
+              "LINES :", self.lines)
         self.clean_cursor()
 
         max_num = self.lines[self.y] - self.x
@@ -519,15 +523,17 @@ class OutputTranscoder():
         self.max_seq_cursor = max(self.cursor, self.max_seq_cursor)
         self.lines[self.y] -= num
         del self.content[self.cursor:to]
-        debug("AFTER -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
-                  "LINES :", self.lines)
+        debug("AFTER -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor,
+              self.max_seq_cursor,
+              "LINES :", self.lines)
         debug("TOUT :{}\n------".format(self.content))
 
     def erase_down(self):
         """Erases the `num` lines after the cursor"""
         debug("ERASE DOWN")
-        debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
-                  "LINES :", self.lines)
+        debug("BEFORE -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor,
+              self.max_seq_cursor,
+              "LINES :", self.lines)
         self.clean_cursor()
         if len(self.lines) - 1 == self.y:
             return
@@ -539,8 +545,9 @@ class OutputTranscoder():
         debug("REMAINING max_x:{}, remaining:{}, end_line_cursor:{}".format(max_x, remaining, cursor))
 
         self.lines[self.y] -= remaining
-        debug("AFTER -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor, self.max_seq_cursor,
-                  "LINES :", self.lines)
+        debug("AFTER -> X, Y :", self.x, self.y, "CURSOR (c, m, M):", self.cursor, self.min_seq_cursor,
+              self.max_seq_cursor,
+              "LINES :", self.lines)
         debug("TOUT :{}\n------".format(self.content))
 
     def switchASBOn(self):
@@ -572,46 +579,7 @@ class OutputTranscoder():
         (self.x, self.y) = self.convert_xy(self.cursor)
         (self.last_clean_x, self.last_clean_y) = (self.x, self.y)
         self.min_seq_cursor = 0
-        self.max_seq_cursor = len(self.content) - 1
+        self.max_seq_cursor = len(self.content)
 
         debug("RETRIEVED LINES", self.lines, "CURSOR", self.cursor, "X, Y", self.x, self.y)
 
-
-# [0, 1, 2, '\n'] -> 4 [a, b, c, d, '\n'] -> 5
-# cursor = 0, cursor += 6 : y += 1 et x = x - (len(line) - 1) = 6 - 4 + 1 = 3
-
-if __name__ == '__main__':
-    sm = OutputTranscoder()
-    sm.begin_sequence()
-    sm.write("a")
-    sm.write("z")
-    sm.write("e")
-    sm.write("r")
-    sm.write("t")
-
-    sm.crlf()
-    #    sm.move_backward(1)
-    #    sm.move_backward(1)
-    #    sm.lf()
-    #    sm.move_left(2)
-    #    sm.lf()
-
-    sm.write("A")
-    sm.write("Z")
-    sm.write("E")
-    sm.write("R")
-
-    #    sm.move_up()
-    #    sm.crlf()
-    sm.move_backward(2)
-    sm.erase_line()
-
-    #    sm.lf()
-    #    sm.move_left(2)
-    #    sm.move_up()
-    #    sm.write("a")
-    #    sm.write("a")
-    debug(sm.lines)
-    sm.end_sequence()
-    debug(sm.get_last_output(timeout=1))
-    debug(sm.lines)

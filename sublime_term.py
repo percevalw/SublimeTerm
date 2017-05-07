@@ -36,7 +36,7 @@ class TermCommand(sublime_plugin.WindowCommand):
         imp.reload(sublimeterm)
 
         # RELOADING SETTINGS
-        self.settings = sublime.load_settings("Term.sublime-settings")
+        self.settings = sublime.load_settings("_sublimeterm_core.sublime-settings")
 
         root = os.path.dirname(os.path.realpath(__file__))
 
@@ -48,7 +48,12 @@ class TermCommand(sublime_plugin.WindowCommand):
         ot = sublimeterm.ANSIOutputTranscoder()
 
         view_controller = sublimeterm.SublimetermViewController(it, ot)
-        process_controller = sublimeterm.ProcessController(it, ot, "/bin/bash")
+        process_controller = sublimeterm.ProcessController(
+            it,
+            ot,
+            [base_cmd, root] + tty_cmd,
+            env=self.settings.get("env", {})
+        )
 
         view_controller.start()
         process_controller.start()

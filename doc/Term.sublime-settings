@@ -1,5 +1,4 @@
 {
     "command": "/bin/bash",
-    "env": {},
-    "scroll_past_end": true
+    "env": {}
 }

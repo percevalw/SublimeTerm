@@ -1,8 +1,8 @@
 {
     "color_scheme": "Packages/Term/Term.tmTheme",
+    "font_face": "Meslo LG M DZ Regular for Powerline",
     "tab_size": 8,
     "translate_tabs_to_spaces": false,
     "command": "/bin/bash",
-    "env": {},
-    "scroll_past_end": true
+    "env": {}
 }

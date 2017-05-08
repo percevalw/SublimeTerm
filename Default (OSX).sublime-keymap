@@ -1,13 +1,11 @@
 [
     {
-    "keys": ["ctrl+option+&"],
-    "command": "term",
-       "args" : {"make_new":true}
+        "keys": ["ctrl+option+&"],
+        "command": "term"
     },
     {
-    "keys": ["ctrl+option+a"],
-    "command": "term",
-       "args" : {"make_new":false}
+        "keys": ["ctrl+option+a"],
+        "command": "term"
     },
     {
         "keys": ["tab"],

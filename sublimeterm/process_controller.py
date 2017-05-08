@@ -44,20 +44,22 @@ else:
 class ProcessController:
     instance = None
 
-    def __new__(cls, input_transcoder, output_transcoder, command=None, env=None):
+    def __new__(cls, input_transcoder, output_transcoder, command=None, cwd=None, env=None):
         if isinstance(cls.instance, cls):
             cls.instance.close()
         cls.instance = object.__new__(cls)
         return cls.instance
 
-    def __init__(self, input_transcoder, output_transcoder, command=None, env=None):
+    def __init__(self, input_transcoder, output_transcoder, command=None, cwd=None, env=None):
         self.master = None
         self.slave = None
         self.process = None
 
-        self.command = command
         self.input_transcoder = input_transcoder
         self.output_transcoder = output_transcoder
+
+        self.command = command
+        self.cwd = cwd
         self.env = env
 
         self.mutex = Lock()
@@ -93,7 +95,7 @@ class ProcessController:
             command {list} -- command list for the process (ex: ['ls', '-la'])
         """
         # Create the PTY
-        self.spawn(self.command, self.env)
+        self.spawn(self.command, self.cwd, self.env)
 
         # Loops
         self.read_thread = Thread(target=self.keep_reading)
@@ -116,7 +118,7 @@ class ProcessController:
             log_debug("Successfully killed")
         ProcessController.instance = None
 
-    def spawn(self, command, env):
+    def spawn(self, command, cwd, env):
         """Starts the process
         
         Spawn a new process and register the listeners on it
@@ -134,6 +136,7 @@ class ProcessController:
                                         stdout=self.slave,
                                         stderr=self.slave,
                                         preexec_fn=os.setsid,
+                                        cwd=cwd,
                                         env=child_env)
 
     def keep_reading(self):

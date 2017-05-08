@@ -1,6 +1,10 @@
+# Copyright (C) 2016-2017 Perceval Wajsburt <perceval.wajsburt@gmail.com>
+#
+# This module is part of SublimeTerm and is released under
+# the MIT License: http://www.opensource.org/licenses/mit-license.php
+
 import sublime, sublime_plugin, sublime_api
 import sys, imp, os
-import logging
 
 from . import sublimeterm
 
@@ -16,7 +20,7 @@ class TermCommand(sublime_plugin.WindowCommand):
     ############################
     """
 
-    def run(self, make_new=False, key = None, **kwargs):
+    def run(self, command=None, env=None, cwd=None, make_new=False, key = None, **kwargs):
         print("command")
         c = sublimeterm.SublimetermViewController.instance
 
@@ -41,8 +45,10 @@ class TermCommand(sublime_plugin.WindowCommand):
         root = os.path.dirname(os.path.realpath(__file__))
 
         base_cmd = os.path.join(root, "script.sh")
-        tty_cmd = self.settings.get("command", "/bin/bash")
-        tty_cmd = [tty_cmd] if not isinstance(tty_cmd, list) else tty_cmd
+        command = str(command or self.settings.get("command", "/bin/bash"))
+        command = [command] if not isinstance(command, list) else command
+
+        cwd = cwd or self.settings.get("cwd", "/bin/bash") or None
 
         it = sublimeterm.InputTranscoder()
         ot = sublimeterm.ANSIOutputTranscoder()
@@ -51,7 +57,8 @@ class TermCommand(sublime_plugin.WindowCommand):
         process_controller = sublimeterm.ProcessController(
             it,
             ot,
-            [base_cmd, root] + tty_cmd,
+            command=[base_cmd, root] + command,
+            cwd=cwd,
             env=self.settings.get("env", {})
         )
 

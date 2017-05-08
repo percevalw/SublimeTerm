@@ -6,6 +6,7 @@ SublimeTerm
 SublimeTerm is a plugin for Sublime Text that allows you to run a shell in your editor.
 
 VI and other readline-intensive programs (iPython, PSQL, ...) seem to run fine.
+It has only been tested on OS X but it should work on Linux. Windows is not supported at the moment.
 
 This project is still in its early stages and any contribution will be gratefully welcomed.
 

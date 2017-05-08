@@ -37,7 +37,7 @@
                             {
                                 "command": "open_file", "args":
                                 {
-                                    "file": "${packages}/Term/Term.sublime-settings",
+                                    "file": "${packages}/Term/doc/Term.sublime-settings",
                                     "readonly": true
                                 },
                                 "caption": "Settings – Default"

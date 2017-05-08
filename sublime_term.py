@@ -36,7 +36,7 @@ class TermCommand(sublime_plugin.WindowCommand):
         imp.reload(sublimeterm)
 
         # RELOADING SETTINGS
-        self.settings = sublime.load_settings("_sublimeterm_core.sublime-settings")
+        self.settings = sublime.load_settings("Term.sublime-settings")
 
         root = os.path.dirname(os.path.realpath(__file__))
 

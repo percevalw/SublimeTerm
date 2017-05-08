@@ -15,7 +15,7 @@ class TestProcessController(TestCase):
     def test_no_input(self):
         input_transcoder = InputTranscoder()
         output_transcoder = ANSIOutputTranscoder()
-        with ProcessController(input_transcoder, output_transcoder, ["echo", 'Hello World']):
+        with ProcessController(input_transcoder, output_transcoder, command=["echo", 'Hello World']):
             time.sleep(3)
             expected_result = ('Hello World\n', 0, 12, 12, 12, 12)
             self.assertEqual(expected_result, output_transcoder.pop_output(timeout=2))
@@ -23,7 +23,7 @@ class TestProcessController(TestCase):
     def test_dumb_input(self):
         input_transcoder = InputTranscoder()
         output_transcoder = ANSIOutputTranscoder()
-        with ProcessController(input_transcoder, output_transcoder, ["echo", 'Hello World']):
+        with ProcessController(input_transcoder, output_transcoder, command=["echo", 'Hello World']):
             time.sleep(3)
             input_transcoder.write("DUMB INPUT")
             expected_result = ('Hello World\n', 0, 12, 12, 12, 12)
@@ -32,7 +32,7 @@ class TestProcessController(TestCase):
     def test_sh(self):
         input_transcoder = InputTranscoder()
         output_transcoder = ANSIOutputTranscoder()
-        with ProcessController(input_transcoder, output_transcoder, ["/bin/sh"], {"PS1": "BASH$"}):
+        with ProcessController(input_transcoder, output_transcoder, command=["/bin/sh"], env={"PS1": "BASH$"}):
             time.sleep(3)
             self.assertRegexpMatches(output_transcoder.pop_output(timeout=2)[0], "BASH\$")
             input_transcoder.write("pwd\n")

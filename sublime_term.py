@@ -8,6 +8,9 @@ import sys, imp, os
 
 from . import sublimeterm
 
+# import logging
+# logging.basicConfig(level=logging.DEBUG)
+
 imp.reload(sublimeterm)
 
 
@@ -21,7 +24,6 @@ class TermCommand(sublime_plugin.WindowCommand):
     """
 
     def run(self, command=None, env=None, cwd=None, make_new=False, key = None, **kwargs):
-        print("command")
         c = sublimeterm.SublimetermViewController.instance
 
         if c and key:

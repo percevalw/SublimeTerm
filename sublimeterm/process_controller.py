@@ -129,6 +129,12 @@ class ProcessController:
 
         child_env = os.environ.copy()
         child_env.update(env if env is not None else {})
+        child_env.update({
+            "TERM":"sublimeterm",
+            "COLUMNS":"40",
+            "INPUTRC":"$(pwd)/inputrc"
+        })
+        print(child_env)
 
         self.master, self.slave = os.openpty()
         self.process = subprocess.Popen(command,
@@ -147,11 +153,14 @@ class ProcessController:
         while True:
             if self.stop:
                 break
+            ret = self.process.poll()
+            if ret is not None:
+                self.stop = True
             readable, writable, executable = select.select([self.master], [], [], 5)
             if readable:
                 """ We read the new content """
                 data = os.read(self.master, 1024)
-                text = data.decode('UTF-8')
+                text = data.decode('UTF-8', errors='replace')
                 log_debug("RAW", repr(text))
                 log_debug("PID", os.getenv('BASHPID'))
                 self.output_transcoder.decode(text)
@@ -165,6 +174,9 @@ class ProcessController:
         while True:
             if self.stop:
                 break
+            ret = self.process.poll()
+            if ret is not None:
+                self.stop = True
             readable, writable, executable = select.select([], [self.master], [], 5)
             if writable:
                 try:

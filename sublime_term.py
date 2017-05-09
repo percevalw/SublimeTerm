@@ -62,7 +62,7 @@ class TermCommand(sublime_plugin.WindowCommand):
         command = str(command or self.settings.get("command", "/bin/bash"))
         command = [command] if not isinstance(command, list) else command
 
-        cwd = cwd or self.settings.get("cwd", "/bin/bash") or None
+        cwd = cwd or self.settings.get("cwd", None)
 
         it = sublimeterm.InputTranscoder()
         ot = sublimeterm.ANSIOutputTranscoder()

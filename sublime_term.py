@@ -4,6 +4,7 @@
 # the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 import sublime, sublime_plugin, sublime_api
+import subprocess
 import sys, imp, os
 
 from . import sublimeterm
@@ -14,6 +15,9 @@ from . import sublimeterm
 imp.reload(sublimeterm)
 
 
+def init_plugin(root):
+    subprocess.call(["tic", os.path.join(root, "term.ti")])
+
 class TermCommand(sublime_plugin.WindowCommand):
     """
     ############################
@@ -23,7 +27,7 @@ class TermCommand(sublime_plugin.WindowCommand):
     ############################
     """
 
-    def run(self, command=None, env=None, cwd=None, make_new=False, key = None, **kwargs):
+    def run(self, command=None, env=None, cwd=None, key=None, **kwargs):
         c = sublimeterm.SublimetermViewController.instance
 
         if c and key:
@@ -46,7 +50,15 @@ class TermCommand(sublime_plugin.WindowCommand):
 
         root = os.path.dirname(os.path.realpath(__file__))
 
-        base_cmd = os.path.join(root, "script.sh")
+        init_plugin(root)
+
+        child_env = {
+            "TERM": "sublimeterm",
+            "COLUMNS": "40",
+            "INPUTRC": os.path.join(root, "/inputrc")
+        }
+        child_env.update(env or self.settings.get("env", {}))
+
         command = str(command or self.settings.get("command", "/bin/bash"))
         command = [command] if not isinstance(command, list) else command
 
@@ -59,9 +71,9 @@ class TermCommand(sublime_plugin.WindowCommand):
         process_controller = sublimeterm.ProcessController(
             it,
             ot,
-            command=[base_cmd, root] + command,
+            command=command,
             cwd=cwd,
-            env=self.settings.get("env", {})
+            env=child_env
         )
 
         view_controller.start()

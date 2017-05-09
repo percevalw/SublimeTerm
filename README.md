@@ -1,7 +1,7 @@
 SublimeTerm
 ===========
 
-[![Build Status](https://travis-ci.org/percevalw/Sublimeterm.svg?branch=master)](https://travis-ci.org/percevalw/Sublimeterm) [![codecov](https://codecov.io/gh/percevalw/Sublimeterm/branch/master/graph/badge.svg)](https://codecov.io/gh/percevalw/Sublimeterm)
+[![Build Status](https://travis-ci.org/percevalw/SublimeTerm.svg?branch=master)](https://travis-ci.org/percevalw/SublimeTerm) [![codecov](https://codecov.io/gh/percevalw/Sublimeterm/branch/master/graph/badge.svg)](https://codecov.io/gh/percevalw/Sublimeterm)
 
 SublimeTerm is a plugin for Sublime Text that allows you to run a shell in your editor.
 

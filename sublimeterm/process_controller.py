@@ -134,7 +134,6 @@ class ProcessController:
             "COLUMNS":"40",
             "INPUTRC":"$(pwd)/inputrc"
         })
-        print(child_env)
 
         self.master, self.slave = os.openpty()
         self.process = subprocess.Popen(command,

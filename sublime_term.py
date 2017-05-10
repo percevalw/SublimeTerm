@@ -27,7 +27,7 @@ class TermCommand(sublime_plugin.WindowCommand):
     ############################
     """
 
-    def run(self, command=None, env=None, cwd=None, key=None, **kwargs):
+    def run(self, command=None, env=None, cwd=None, key=None, output_panel=None, **kwargs):
         c = sublimeterm.SublimetermViewController.instance
 
         if c and key:
@@ -64,10 +64,17 @@ class TermCommand(sublime_plugin.WindowCommand):
 
         cwd = cwd or self.settings.get("cwd", None)
 
+        output_panel = self.settings.get("output_panel", False) if output_panel is None else output_panel
+
         it = sublimeterm.InputTranscoder()
         ot = sublimeterm.ANSIOutputTranscoder()
 
-        view_controller = sublimeterm.SublimetermViewController(it, ot)
+        view_controller = sublimeterm.SublimetermViewController(
+            it,
+            ot,
+            settings=self.settings,
+            output_panel=output_panel
+        )
         process_controller = sublimeterm.ProcessController(
             it,
             ot,

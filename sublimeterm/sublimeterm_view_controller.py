@@ -73,14 +73,14 @@ class SublimetermViewController():
     def __del__(self):
         debug("SublimetermViewController should have been deleted !")
 
-    def __new__(cls, input_transcoder, output_transcoder):
+    def __new__(cls, input_transcoder, output_transcoder, settings=None, output_panel=False):
         if isinstance(cls.instance, cls):
             cls.instance.close()
 
         cls.instance = object.__new__(cls)
         return cls.instance
 
-    def __init__(self, input_transcoder, output_transcoder):
+    def __init__(self, input_transcoder, output_transcoder, settings=None, output_panel=False):
         self.master = None
 
         self.view_mod_begin = 0
@@ -110,6 +110,8 @@ class SublimetermViewController():
         self.console = None
         self.input_queue = Queue()
         self.lock = Lock()
+        self.settings = settings
+        self.output_panel = output_panel
 
         self.editing_thread = None
         self.listening_thread = None
@@ -396,14 +398,14 @@ class SublimetermViewController():
     # Sublime View helper methods
     #############################
 
-    def open_view(self, output_panel=False):
+    def open_view(self):
         """ Open the view
 
         Open the view we're going to work in and
         lock it (read_only) until everything is set
         """
         window = sublime.active_window()
-        if not output_panel:
+        if not self.output_panel:
             self.console = window.open_file("sublimeterm.output")
             self.console.set_scratch(True)
             #            self.console.set_name("Sublimeterm console")
@@ -412,8 +414,10 @@ class SublimetermViewController():
         else:
             self.console = window.find_output_panel("term")
             if not self.console:
-                self.console = window.create_output_panel("term")
-            window.run_command("show_panel", {"panel": "output.sublimeterm"})
+                self.console = window.create_output_panel("term", True)
+            window.run_command("show_panel", {"panel": "output.term"})
+            if (self.settings):
+                self.console.set_syntax_file(self.settings.get('color_scheme'))
             self.console.set_read_only(False)
             window.focus_view(self.console)
         self.console.set_viewport_position((0, 0))

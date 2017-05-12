@@ -10,6 +10,18 @@ It has only been tested on OS X but it should work on Linux. Windows is not supp
 
 This project is still in its early stages and any contribution will be gratefully welcomed.
 
+
+## Installation
+
+*This is the temporary procedure until the package is accepted in Package Control repositories*
+
+- Open Sublime Text command menu
+- Select `Add Repository`
+- Enter `https://raw.githubusercontent.com/percevalw/SublimeTerm/master/packages.json`
+- Select `Install Package`
+- Search for `Term` and install
+
+
 ## Configuration
 
 Edit the settings in `Preferences > Packages Settings > Term`.

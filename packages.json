@@ -1,0 +1,19 @@
+{
+	"schema_version": "3.0.0",
+	"packages": [
+		{
+			"name": "Term",
+			"homepage": "https://github.com/percevalw/SublimeTerm",
+			"previous_names": ["SublimeTerm"],
+			"details": "https://github.com/percevalw/SublimeTerm",
+			"labels": ["terminal", "tab", "shell", "repl"],
+			"releases" : [
+				{
+					"sublime_text": ">=3000",
+					"platforms": ["osx", "osx-x64", "linux"],
+					"tags": true
+				}
+			]
+		}
+	]
+}

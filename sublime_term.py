@@ -59,7 +59,7 @@ class TermCommand(sublime_plugin.WindowCommand):
         }
         child_env.update(env or self.settings.get("env", {}))
 
-        command = str(command or self.settings.get("command", "/bin/bash"))
+        command = command or self.settings.get("command", "/bin/bash")
         command = [command] if not isinstance(command, list) else command
 
         cwd = cwd or self.settings.get("cwd", None)

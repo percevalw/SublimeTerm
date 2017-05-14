@@ -121,6 +121,12 @@ def DoHomeOrigin(fsm):
     screen.move_to(c, r)
 
 
+def DoGoX(fsm):
+    c = int(fsm.memory.pop())
+    screen = fsm.memory[0]
+    screen.move_to(x=c)
+
+
 def DoEraseDown(fsm):
     screen = fsm.memory[0]
     screen.erase_down()
@@ -161,6 +167,12 @@ def DoInsertSpaces(fsm):
 
 def DoEraseForward(fsm):
     arg = int(fsm.memory.pop())
+    screen = fsm.memory[0]
+    screen.erase_forward(arg)
+
+
+def DoEraseForwardOne(fsm):
+    arg = 1
     screen = fsm.memory[0]
     screen.erase_forward(arg)
 
@@ -268,6 +280,7 @@ class ANSIOutputTranscoder(OutputTranscoder):
         self.state.add_transition('D', 'ELB', DoBackOne, 'INIT')
         self.state.add_transition('B', 'ELB', DoDownOne, 'INIT')
         self.state.add_transition('C', 'ELB', DoForwardOne, 'INIT')
+        self.state.add_transition('P', 'ELB', DoEraseForwardOne, 'INIT')
         self.state.add_transition('A', 'ELB', DoUpOne, 'INIT')
         self.state.add_transition('J', 'ELB', DoEraseDown, 'INIT')
         self.state.add_transition('K', 'ELB', DoEraseEndOfLine, 'INIT')
@@ -279,6 +292,7 @@ class ANSIOutputTranscoder(OutputTranscoder):
         self.state.add_transition('D', 'NUMBER_1_ELB', DoBack, 'INIT')
         self.state.add_transition('B', 'NUMBER_1_ELB', DoDown, 'INIT')
         self.state.add_transition('C', 'NUMBER_1_ELB', DoForward, 'INIT')
+        self.state.add_transition('G', 'NUMBER_1_ELB', DoGoX, 'INIT')
         self.state.add_transition('A', 'NUMBER_1_ELB', DoUp, 'INIT')
         self.state.add_transition('P', 'NUMBER_1_ELB', DoEraseForward, 'INIT')
         self.state.add_transition('J', 'NUMBER_1_ELB', DoErase, 'INIT')

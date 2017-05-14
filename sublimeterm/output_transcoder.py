@@ -242,11 +242,13 @@ class OutputTranscoder:
         else:
             if insert_after:
                 saved_x = self.x
-            for ch in string:
-                    self.write_char(ch)
-            if insert_after:
+                for ch in reversed(string):
+                    self.write_char(ch, True)
                 self.dirty_cursor = True
                 self.x = saved_x
+            else:
+                for ch in string:
+                    self.write_char(ch)
 
     def lf(self):
         """Writes the Line Feed control char"""

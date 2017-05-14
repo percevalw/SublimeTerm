@@ -63,7 +63,7 @@ class InputTranscoder():
     def erase(self, n=1):
         if n <= 0:
             return
-        s = ''.join(['\x08' for s in range(n)])
+        s = ''.join([SpecialChar.DEL for s in range(n)])
         self.input_queue.put((0, s))
 
 

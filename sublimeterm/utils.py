@@ -8,6 +8,7 @@ class SpecialChar:
     TAB = '\t'
     BEL = '\x07'
     BACKSPACE = '\x08'
+    DEL = '\x7f'
     UP = '\x1BOA'
     DOWN = '\x1BOB'
     LEFT = '\x1BOD'

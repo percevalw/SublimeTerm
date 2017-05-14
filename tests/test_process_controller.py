@@ -37,4 +37,4 @@ class TestProcessController(TestCase):
             self.assertRegexpMatches(output_transcoder.pop_output(timeout=2)[0], "BASH\$")
             input_transcoder.write("pwd\n")
             time.sleep(2)
-            self.assertIn("SublimeTerm", output_transcoder.pop_output(timeout=2)[0])
+            self.assertIn("/", output_transcoder.pop_output(timeout=2)[0])

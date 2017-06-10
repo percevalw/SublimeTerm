@@ -55,6 +55,7 @@ class TermCommand(sublime_plugin.WindowCommand):
         child_env = {
             "TERM": "sublimeterm",
             "COLUMNS": "40",
+            "ROWS": "40",
             "INPUTRC": os.path.join(root, "/inputrc")
         }
         child_env.update(env or self.settings.get("env", {}))

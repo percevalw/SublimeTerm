@@ -127,6 +127,10 @@ class SublimetermViewController():
         self.editing_thread = Thread(target=self.keep_editing)
         self.listening_thread = Thread(target=self.keep_listening)
 
+        size = (80, 24, 1, 12)
+        self.input_transcoder.set_size(*size)
+        self.output_transcoder.set_size(*size)
+
         self.editing_thread.start()
         self.listening_thread.start()
 

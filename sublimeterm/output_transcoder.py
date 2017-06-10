@@ -207,7 +207,7 @@ class OutputTranscoder:
             self.max_seq_cursor += 1
             self.lines[self.y] += 1
         else:
-            self.content[self.cursor] = ch
+            self.content[self.cursor:self.cursor+1] = ch
             self.max_seq_cursor = max(self.cursor + 1, self.max_seq_cursor)  # only useful if max_seq_cursor == cursor
 
         if not insert_after:

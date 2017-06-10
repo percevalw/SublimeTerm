@@ -1,4 +1,7 @@
 {
+    "color_scheme": "Packages/Term/Term.tmTheme",
+    "tab_size": 8,
+    "translate_tabs_to_spaces": false,
     "command": "/bin/bash",
     "env": {}
 }
